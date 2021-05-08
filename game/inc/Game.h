@@ -17,36 +17,18 @@ constexpr int g_AppWidth = 800;
 constexpr int g_AppHeight = 900;
 constexpr int g_Padding = 10;
 
-constexpr int g_FieldWidth = 10;
-constexpr int g_FieldHeight = 20;
-
 const std::string g_BlockPath = "assets/bl.png"; 
-const std::string g_BackPath = "assets/2.png"; 
-
-struct alignas(16) SpriteEntity
-{
-    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    ::MiniKit::Graphics::float2 position{ 0.0f, 0.0f };
-    ::MiniKit::Graphics::float2 scale{ 1.0f, 1.0f };
-
-    ::std::string imageName;
-    // ::std::shared_ptr<::MiniKit::Graphics::Image> image{ nullptr };
-};
+const std::string g_BackPath = "assets/3.png";
 
 class StateMachine;
 
-class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder
+class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
+                   public std::enable_shared_from_this<Game>
 {
-    ::std::unique_ptr<StateMachine> m_State;
+    StateMachine* m_State;
+    ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
 
-    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
-    // ::std::unique_ptr<Tetromino> m_Tetromino{ nullptr };
-
-    ::std::array<::std::array<int, 10>, 20> m_Field;
-    ::std::array<::std::array<SpriteEntity, 10>, 20> m_Background;
-    ::std::vector<SpriteEntity> m_Blocks;
-
-    uint64_t m_FrameTime;
+    
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
