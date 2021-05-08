@@ -1,0 +1,3 @@
+[submodule "minikit"]
+	path = minikit
+	url = git@gitlab.ucode.world:services/minikit.git
