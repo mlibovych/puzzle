@@ -12,10 +12,15 @@ Tetromino::Tetromino()
     m_Shape[1][1] = 1;
     m_Shape[1][2] = 1;
 
-    m_X = 20;
+    m_X = 3;
     m_Y = 0;
 }
+
 Tetromino::~Tetromino()
 {
 
+}
+
+void Tetromino::moveDown() noexcept {
+    m_Y++;
 }

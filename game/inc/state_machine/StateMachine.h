@@ -9,11 +9,17 @@
 #include <unordered_map>
 
 #include <MiniKit/MiniKit.hpp>
+#include <Tetromino.h>
 
 constexpr int g_FieldWidth = 10;
 constexpr int g_FieldHeight = 20;
 
 class Game;
+
+struct alignas(16) Block {
+    size_t x;
+    size_t y;
+};
 
 struct alignas(16) SpriteEntity
 {
@@ -49,9 +55,11 @@ class GameState : public StateMachine
 
     ::std::array<::std::array<int, g_FieldWidth>, g_FieldHeight> m_Field;
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
-    ::std::vector<SpriteEntity> m_Blocks;
-
+    ::std::vector<Block> m_Blocks;
+    ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     uint64_t m_FrameTime;
+
+    void addToField() noexcept;
 public:
     GameState(std::shared_ptr<Game> game, ::MiniKit::Engine::Context& context);
     ~GameState();

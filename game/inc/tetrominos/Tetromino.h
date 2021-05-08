@@ -6,13 +6,13 @@
 
 #include <MiniKit/MiniKit.hpp>
 
-class Game;
-
 class Tetromino {
-    friend class Game;
-    std::array<std::array<int, 4>, 4> m_Shape;
-    float m_X, m_Y;
 public:
     Tetromino();
     ~Tetromino();
+
+    void moveDown() noexcept;
+
+    int m_X, m_Y;
+    std::array<std::array<int, 4>, 4> m_Shape;
 };
