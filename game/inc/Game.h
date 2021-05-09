@@ -16,18 +16,35 @@ constexpr int g_AppWidth = 800;
 constexpr int g_AppHeight = 900;
 constexpr int g_Padding = 10;
 
-const std::string g_BlockPath = "assets/bl.png"; 
+const std::string g_BlockPath = "assets/sq.png"; 
 const std::string g_BackPath = "assets/3.png";
 
 class StateMachine;
+class GameState;
+class SpawnState;
+class PositioningState;
 
 class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
                    public std::enable_shared_from_this<Game>
 {
+    friend class GameState;
+    friend class SpawnState;
+    friend class PositioningState;
+
     StateMachine* m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
 
+    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
+
+    ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Field;
+    ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
+    ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
+    uint64_t m_FrameTime;
+
+    ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
     
+    void addToField() noexcept;
+    void DrawField(::MiniKit::Engine::Context& context) noexcept;
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     

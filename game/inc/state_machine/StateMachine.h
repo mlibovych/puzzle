@@ -17,23 +17,26 @@ constexpr int g_FieldHeight = 20;
 class Game;
 
 struct alignas(16) Block {
-    size_t x;
-    size_t y;
+    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    // size_t y;
+    // size_t x;
 };
 
 struct alignas(16) SpriteEntity
 {
     ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
     ::MiniKit::Graphics::float2 position{ 0.0f, 0.0f };
-    ::MiniKit::Graphics::float2 scale{ 1.0f, 1.0f };
 
     ::std::string imageName;
 };
 
 enum class States
 {
-    MENU,
-    GAME,
+    NEW_GAME,
+    SPAWN,
+    POSITIONING,
+    LINE_COMPLEATED,
+    PAUSE,
     COUT
 };
 
@@ -51,18 +54,33 @@ public:
 
 class GameState : public StateMachine
 {
-    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
-
-    ::std::array<::std::array<int, g_FieldWidth>, g_FieldHeight> m_Field;
-    ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
-    ::std::vector<Block> m_Blocks;
-    ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
-    uint64_t m_FrameTime;
-
-    void addToField() noexcept;
 public:
-    GameState(std::shared_ptr<Game> game, ::MiniKit::Engine::Context& context);
+    GameState(std::shared_ptr<Game> game);
     ~GameState();
 
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
 };
+
+class SpawnState : public GameState {
+public:
+    SpawnState(std::shared_ptr<Game> game);
+    ~SpawnState();
+
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+};
+
+// class PositioningState : public GameState {
+// public:
+//     PositioningState(std::shared_ptr<Game> game);
+//     ~PositioningState();
+
+//     virtual void Tick() noexcept override;
+// };
+
+// class LineCompleatedState : public GameState {
+// public:
+// };
+
+// class PauseState : public GameState {
+// public:
+// };
