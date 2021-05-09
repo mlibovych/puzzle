@@ -59,6 +59,7 @@
 
 void Game::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
+    // std::cout << context.GetFrameDelta() << std::endl;
     m_State->Tick(context);
 }
 
@@ -147,18 +148,44 @@ void Game::CheckCollision() {
 
 void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
-    if (!m_KeyState[event.keycode])
+    using ::MiniKit::Platform::Keycode;
+
+    switch (event.keycode)
     {
-        // std::cout << "Down" << std::endl;
-        m_KeyState[event.keycode] = true;
+        case  Keycode::KeyLeft:
+        case  Keycode::KeyRight:
+        {
+            if (!m_KeyState[event.keycode])
+            {
+                m_KeyState[event.keycode] = true;
+                m_State->KeyDown(event);
+            }
+            break;
+        }
+        default:
+            break;
     }
+ 
 }
 
 void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
-    if (m_KeyState[event.keycode])
+    using ::MiniKit::Platform::Keycode;
+
+    switch (event.keycode)
     {
-        // std::cout << "Up" << std::endl;
-        m_KeyState[event.keycode] = false;
+        case  Keycode::KeyLeft:
+        case  Keycode::KeyRight:
+        {
+            if (m_KeyState[event.keycode])
+            {
+                m_KeyState[event.keycode] = false;
+                m_State->KeyUp(event);
+            }
+            break;
+        }
+        default:
+            break;
     }
+
 }

@@ -40,6 +40,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     uint64_t m_FrameTime;
+    uint64_t m_SideMovingTime;
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 

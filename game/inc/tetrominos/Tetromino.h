@@ -3,15 +3,18 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <MiniKit/MiniKit.hpp>
 
 class Tetromino {
+    
 public:
     Tetromino();
     ~Tetromino();
 
     void moveDown() noexcept;
+    void moveSide(int step) noexcept;
 
     int m_X, m_Y;
     ::MiniKit::Graphics::Color m_Color{ 0.3f, 1.0f, 0.61f, 1.0f };
