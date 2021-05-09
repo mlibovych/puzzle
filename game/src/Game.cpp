@@ -5,7 +5,7 @@
 {   
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
-    // m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
+    m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
     m_State = m_States[States::SPAWN].get();
 
     //window
@@ -64,33 +64,6 @@ void Game::Tick(::MiniKit::Engine::Context& context) noexcept
 
 void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
 {
-    //moving
-    uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    
-    if (!m_Tetromino) {
-        m_Tetromino = ::std::make_unique<Tetromino> ();
-    }
-    if (now - m_FrameTime > 200) {
-        m_FrameTime = now;
-        m_Tetromino->moveDown();
-    }
-
-    //check state
-    try {
-        for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
-            for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-                if (m_Tetromino->m_Shape[y][x] &&
-                    (m_Tetromino->m_Y + y >= g_FieldHeight || m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x])) {
-                    throw true;
-                }
-            }
-        }
-    }
-    catch (bool) {
-        addToField();
-        return;
-    }
-
     //drawing
     auto& graphicsDevice = context.GetGraphicsDevice();
     auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
@@ -112,15 +85,17 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
     //draw tetromino
     commandBuffer.SetImage(*m_Images["block"]);
 
-    for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
-        for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-            if (m_Tetromino->m_Shape[y][x]) {
-                drawSurface.tint = m_Tetromino->m_Color;
-                drawSurface.position.x = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
-                drawSurface.position.y = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
-                drawSurface.scale = m_BlockSkale;
+    if (m_Tetromino) {
+        for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
+            for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
+                if (m_Tetromino->m_Shape[y][x]) {
+                    drawSurface.tint = m_Tetromino->m_Color;
+                    drawSurface.position.x = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
+                    drawSurface.position.y = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
+                    drawSurface.scale = m_BlockSkale;
 
-                commandBuffer.Draw(drawSurface);
+                    commandBuffer.Draw(drawSurface);
+                }
             }
         }
     }
@@ -141,7 +116,8 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
     graphicsDevice.EndFrame(commandBuffer);
 }
 
-void Game::addToField() noexcept {
+void Game::AddToField() noexcept
+{
     for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
             if (m_Tetromino->m_Shape[y][x] && m_Tetromino->m_Y + y > 0) {
@@ -151,4 +127,20 @@ void Game::addToField() noexcept {
         }
     }
     m_Tetromino = nullptr;
+}
+
+void Game::ChangeState(States state) noexcept
+{
+    m_State = m_States[state].get();
+}
+
+void Game::CheckCollision() {
+    for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
+        for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
+            if (m_Tetromino->m_Shape[y][x] &&
+                (m_Tetromino->m_Y + y >= g_FieldHeight || m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x])) {
+                throw true;
+            }
+        }
+    }
 }

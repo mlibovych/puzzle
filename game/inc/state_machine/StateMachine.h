@@ -18,8 +18,6 @@ class Game;
 
 struct alignas(16) Block {
     ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    // size_t y;
-    // size_t x;
 };
 
 struct alignas(16) SpriteEntity
@@ -37,6 +35,7 @@ enum class States
     POSITIONING,
     LINE_COMPLEATED,
     PAUSE,
+    GAME_OVER,
     COUT
 };
 
@@ -69,13 +68,13 @@ public:
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
 };
 
-// class PositioningState : public GameState {
-// public:
-//     PositioningState(std::shared_ptr<Game> game);
-//     ~PositioningState();
+class PositioningState : public GameState {
+public:
+    PositioningState(std::shared_ptr<Game> game);
+    ~PositioningState();
 
-//     virtual void Tick() noexcept override;
-// };
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+};
 
 // class LineCompleatedState : public GameState {
 // public:

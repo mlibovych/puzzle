@@ -43,8 +43,10 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
     
-    void addToField() noexcept;
+    void AddToField() noexcept;
     void DrawField(::MiniKit::Engine::Context& context) noexcept;
+    void ChangeState(States state) noexcept;
+    void CheckCollision();
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
