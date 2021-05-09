@@ -144,3 +144,21 @@ void Game::CheckCollision() {
         }
     }
 }
+
+void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    if (!m_KeyState[event.keycode])
+    {
+        // std::cout << "Down" << std::endl;
+        m_KeyState[event.keycode] = true;
+    }
+}
+
+void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    if (m_KeyState[event.keycode])
+    {
+        // std::cout << "Up" << std::endl;
+        m_KeyState[event.keycode] = false;
+    }
+}

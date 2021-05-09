@@ -42,6 +42,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     uint64_t m_FrameTime;
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
+
+    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
     void AddToField() noexcept;
     void DrawField(::MiniKit::Engine::Context& context) noexcept;
@@ -53,4 +55,8 @@ public:
     ::std::error_code Shutdown(::MiniKit::Engine::Context& context) noexcept override;
     
     void Tick(::MiniKit::Engine::Context& context) noexcept override;
+
+    void KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    
+    void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
