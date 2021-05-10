@@ -18,19 +18,6 @@ constexpr int g_SideMovingSpeed = 100;
 
 class Game;
 
-struct alignas(16) Block
-{
-    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
-};
-
-struct alignas(16) SpriteEntity
-{
-    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    ::MiniKit::Graphics::float2 position{ 0.0f, 0.0f };
-
-    ::std::string imageName;
-};
-
 enum class States
 {
     NEW_GAME,
@@ -97,9 +84,13 @@ public:
     void Stop(Direction direction) noexcept;
 };
 
-// class LineCompleatedState : public GameState {
-// public:
-// };
+class LineCompleatedState : public GameState {
+public:
+    LineCompleatedState(std::shared_ptr<Game> game);
+    ~LineCompleatedState();
+
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+};
 
 // class PauseState : public GameState {
 // public:

@@ -6,7 +6,16 @@
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
     m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
+    m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
     m_State = m_States[States::SPAWN].get();
+
+    //event system
+    m_EventSystem = std::make_unique<EventSystem>();
+    m_GridResolver = std::make_unique<GridResolver> (shared_from_this());
+    m_GridManager = std::make_unique<GridManager> (shared_from_this());
+
+    m_EventSystem->Subscribe(EventType::BLOCK_SET_EVENT, m_GridResolver.get());
+    m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_GridManager.get());
 
     //window
     auto& window = context.GetWindow();
@@ -23,7 +32,6 @@
     for (auto& row : m_Field) {
         for (auto& col : row) {
             col = nullptr;
-        // row.fill(nullptr);
         }
     }
     //field background
@@ -43,7 +51,6 @@
         for (int x = 0; x < g_FieldWidth; x++) {
             auto& cell = m_Background[y][x];
 
-            cell.imageName = "field";
             cell.position.x = anchorPositionX + imageScaleY * imageSize.width * x;
             cell.position.y = anchorPositionY - imageScaleY * imageSize.width * y;
         }
@@ -160,20 +167,6 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
     graphicsDevice.EndFrame(commandBuffer);
 }
 
-void Game::AddToField() noexcept
-{
-    for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
-        for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-            if (m_Tetromino->m_Shape[y][x] && m_Tetromino->m_Y + y > 0) {
-                m_Field[m_Tetromino->m_Y + y - 1][m_Tetromino->m_X + x] = std::make_unique<Block>();
-                m_Field[m_Tetromino->m_Y + y - 1][m_Tetromino->m_X + x]->color = m_Tetromino->m_Color;
-            }
-        }
-    }
-    m_Tetromino = nullptr;
-    m_TetrominoGhost = nullptr;
-}
-
 void Game::ChangeState(States state) noexcept
 {
     m_State = m_States[state].get();
@@ -258,4 +251,80 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
             break;
     }
 
+}
+
+GridResolver::GridResolver(std::shared_ptr<Game> game) : GameObject(game)
+{
+
+}
+
+void GridResolver::react(const GameEvent& event) noexcept
+{   
+    auto game = m_game.lock();
+    std::vector<int> compleatedLines;
+
+    for (int line : event.lines) {
+        bool compleated = true;
+
+        for (auto& cell : game->m_Field[line]) {
+            if (cell == nullptr) {
+                compleated = false;
+            }
+        }
+        if (compleated) {
+            compleatedLines.push_back(line);
+        }
+    }
+    if (!compleatedLines.empty()) {
+        GameEvent new_event;
+        new_event.eventType = EventType::LINES_COMPLEATED_EVENT;
+        new_event.lines = compleatedLines;
+        game->m_EventSystem->AddEvent(std::move(new_event));
+    }
+}
+
+GridManager::GridManager(std::shared_ptr<Game> game) : GameObject(game)
+{
+
+}
+
+void GridManager::react(const GameEvent& event) noexcept
+{   
+    m_compleatedLines = event.lines;
+}
+
+void GridManager::ClearLines() noexcept {
+    auto game = m_game.lock();
+
+    for (int line : m_compleatedLines) {
+        for (int x = 0; x < game->m_Field[line].size(); x++) {
+            game->m_Field[line][x] = nullptr;
+        }
+    }
+    m_compleatedLines.clear();
+}
+
+void GridManager::AddToField() noexcept
+{   
+    auto game = m_game.lock();
+
+    for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
+        for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
+            if (game->m_Tetromino->m_Shape[y][x] && game->m_Tetromino->m_Y + y > 0) {
+                game->m_Field[game->m_Tetromino->m_Y + y - 1][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
+                game->m_Field[game->m_Tetromino->m_Y + y - 1][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
+            }
+        }
+    }
+
+    GameEvent event;
+
+    event.eventType = EventType::BLOCK_SET_EVENT;
+    for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
+        event.lines.push_back(y + game->m_Tetromino->m_Y);
+    }
+    game->m_EventSystem->AddEvent(std::move(event));
+
+    game->m_Tetromino = nullptr;
+    game->m_TetrominoGhost = nullptr;
 }

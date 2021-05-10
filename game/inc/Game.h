@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <StateMachine.h>
+#include <EventSystem.h>
 
 #include <MiniKit/MiniKit.hpp>
 
@@ -23,6 +24,52 @@ class StateMachine;
 class GameState;
 class SpawnState;
 class PositioningState;
+class LineCompleatedState;
+
+struct alignas(16) Block
+{
+    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
+};
+
+struct alignas(16) SpriteEntity
+{
+    ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    ::MiniKit::Graphics::float2 position{ 0.0f, 0.0f };
+};
+
+class GameObject : public Object
+{
+protected:
+    std::weak_ptr<Game> m_game;
+public:
+    GameObject(std::shared_ptr<Game> game) : m_game(game)
+    {
+
+    }
+
+    virtual void react(const GameEvent& event) = 0;
+};
+
+
+class GridResolver : public GameObject
+{
+public:
+    GridResolver(std::shared_ptr<Game> game);
+
+    virtual void react(const GameEvent& event) noexcept;
+};
+
+class GridManager : public GameObject
+{
+    std::vector<int> m_compleatedLines;
+public:
+    GridManager(std::shared_ptr<Game> game);
+
+    virtual void react(const GameEvent& event) noexcept;
+
+    void AddToField() noexcept;
+    void ClearLines() noexcept;
+};
 
 class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
                    public std::enable_shared_from_this<Game>
@@ -30,9 +77,17 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class GameState;
     friend class SpawnState;
     friend class PositioningState;
+    friend class LineCompleatedState;
+
+    friend class GridResolver;
+    friend class GridManager;
 
     StateMachine* m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
+
+    ::std::unique_ptr<EventSystem> m_EventSystem { nullptr };
+    ::std::unique_ptr<GridResolver> m_GridResolver { nullptr };
+    ::std::unique_ptr<GridManager> m_GridManager { nullptr };
 
     ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
 
@@ -47,7 +102,6 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
-    void AddToField() noexcept;
     void DrawField(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;

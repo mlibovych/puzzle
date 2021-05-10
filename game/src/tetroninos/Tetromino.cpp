@@ -12,7 +12,8 @@ Tetromino::Tetromino()
     m_Shape[1][0] = 1;
     m_Shape[1][1] = 1;
     m_Shape[1][2] = 1;
-    //
+    m_Shape[1][3] = 1;
+    m_Shape[1][4] = 1;
 
     //position
     m_X = 3;

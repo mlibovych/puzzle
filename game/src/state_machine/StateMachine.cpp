@@ -24,8 +24,13 @@ GameState::~GameState()
 }
 
 void GameState::Tick(::MiniKit::Engine::Context& context) noexcept
-{
-    m_game.lock()->DrawField(context);
+{   
+    auto game = m_game.lock();
+
+    if (game->m_EventSystem->HaveEvents()) {
+        game->m_EventSystem->ProccedEvent();
+    }
+    game->DrawField(context);
 }
 
 void GameState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -53,9 +58,18 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 {
     auto game = m_game.lock();
 
-    game->m_Tetromino = ::std::make_unique<Tetromino> ();
-    game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
-    game->ChangeState(States::POSITIONING);
+    //events
+    if (game->m_EventSystem->HaveEvents() &&
+        game->m_EventSystem->GetNextEventType() == EventType::LINES_COMPLEATED_EVENT) {
+        game->ChangeState(States::LINE_COMPLEATED);
+    }
+    else {
+        game->m_EventSystem->ProccedEvent();
+        game->m_Tetromino = ::std::make_unique<Tetromino> ();
+        game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
+        game->ChangeState(States::POSITIONING);
+    }
+    
     GameState::Tick(context);
 }
 
@@ -75,17 +89,19 @@ PositioningState::~PositioningState()
 }
 
 void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
-{
-    //moving
+{   
+    
     auto game = m_game.lock();
     
     if (!game) {
         return;
     }
+
+    //moving
     uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
     //down
-    if (now - game->m_FrameTime > 600) {
+    if (now - game->m_FrameTime > 200) {
         game->m_FrameTime = now;
         game->m_Tetromino->moveDown();
     }
@@ -108,7 +124,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->CheckCollision(game->m_Tetromino.get());
     }
     catch (bool) {
-        game->AddToField();
+        game->m_GridManager->AddToField();
         game->ChangeState(States::SPAWN);
     }
     GameState::Tick(context);
@@ -174,4 +190,30 @@ void PositioningState::Stop(Direction direction) noexcept
         }
     }
     m_DirectionsQueue[direction] = 0;
+}
+
+LineCompleatedState::LineCompleatedState(std::shared_ptr<Game> game) :
+            GameState(game)
+{
+
+}
+
+LineCompleatedState::~LineCompleatedState()
+{
+    
+}
+
+void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
+{   
+    
+    auto game = m_game.lock();
+    
+    if (!game) {
+        return;
+    }
+
+    game->m_GridManager->ClearLines();
+    game->ChangeState(States::SPAWN);
+    
+    GameState::Tick(context);
 }
