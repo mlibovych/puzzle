@@ -19,6 +19,13 @@ Tetromino::Tetromino()
     m_Y = 0;
 }
 
+Tetromino::Tetromino(const Tetromino& other) {
+    m_Shape = other.m_Shape;
+    m_X = other.m_X;
+    m_Y = other.m_Y;
+    m_Color = other.m_Color;
+}
+
 Tetromino::~Tetromino()
 {
 

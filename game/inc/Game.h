@@ -39,6 +39,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Field;
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
+    ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
     uint64_t m_FrameTime;
     uint64_t m_SideMovingTime;
 
@@ -48,8 +49,13 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     
     void AddToField() noexcept;
     void DrawField(::MiniKit::Engine::Context& context) noexcept;
+    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void ChangeState(States state) noexcept;
-    void CheckCollision();
+    void CheckCollision(Tetromino* tetromino);
+    void CheckSideCollision(int step);
+    void MoveSide(int step);
+    void GetGhostPosition();
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     

@@ -41,7 +41,7 @@ void GameState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
 SpawnState::SpawnState(std::shared_ptr<Game> game) :
             GameState(game)
 {
-
+    game->m_FrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 SpawnState::~SpawnState()
@@ -54,6 +54,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
     auto game = m_game.lock();
 
     game->m_Tetromino = ::std::make_unique<Tetromino> ();
+    game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
     game->ChangeState(States::POSITIONING);
     GameState::Tick(context);
 }
@@ -77,6 +78,10 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
 {
     //moving
     auto game = m_game.lock();
+    
+    if (!game) {
+        return;
+    }
     uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
     //down
@@ -84,20 +89,23 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->m_FrameTime = now;
         game->m_Tetromino->moveDown();
     }
+
     //side
     if (now - game->m_SideMovingTime > g_SideMovingSpeed) {
         game->m_SideMovingTime = now;
         for (const auto& [key, value] : m_DirectionsQueue) {
             if (value == 1) {
-                game->m_Tetromino->moveSide(m_DirectionStep[key]);
-                break;
+                game->MoveSide(m_DirectionStep[key]);
             }
         }
     }
+ 
+    //ghost
+    game->GetGhostPosition();
     
     //check state
     try {
-        game->CheckCollision();
+        game->CheckCollision(game->m_Tetromino.get());
     }
     catch (bool) {
         game->AddToField();
@@ -147,7 +155,7 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
 void PositioningState::Start(Direction direction) noexcept
 {
     auto game = m_game.lock();
-    game->m_Tetromino->moveSide(m_DirectionStep[direction]);
+    game->MoveSide(m_DirectionStep[direction]);
     game->m_SideMovingTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     for (auto& [key, value] : m_DirectionsQueue) {

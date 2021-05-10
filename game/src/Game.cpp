@@ -63,15 +63,9 @@ void Game::Tick(::MiniKit::Engine::Context& context) noexcept
     m_State->Tick(context);
 }
 
-void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
+void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                          ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
-    //drawing
-    auto& graphicsDevice = context.GetGraphicsDevice();
-    auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
-    
-    ::MiniKit::Graphics::DrawInfo drawSurface{};
-    commandBuffer.SetImage(*m_Images["field"]);
-    
     //draw field
     for (const auto& row : m_Background) {
         for (const auto& col : row) {
@@ -82,10 +76,30 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
             commandBuffer.Draw(drawSurface);
         }
     }
+}
 
-    //draw tetromino
+void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
     commandBuffer.SetImage(*m_Images["block"]);
 
+    //ghost
+    if (m_TetrominoGhost) {
+        for (size_t y = 0; y < m_TetrominoGhost->m_Shape.size(); y++) {
+            for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
+                if (m_TetrominoGhost->m_Shape[y][x]) {
+                    drawSurface.tint = {1.0f, 1.0f, 1.0f, 0.5f};
+                    drawSurface.position.x = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.x;
+                    drawSurface.position.y = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.y;
+                    drawSurface.scale = m_BlockSkale;
+
+                    commandBuffer.Draw(drawSurface);
+                }
+            }
+        }
+    }
+
+    //tetromino
     if (m_Tetromino) {
         for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
@@ -113,6 +127,35 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
+}
+
+void Game::GetGhostPosition()
+{
+    for (int y = m_Tetromino->m_Y; y < g_FieldHeight; y++) {
+        m_TetrominoGhost->m_Y = y;
+        try {
+            CheckCollision(m_TetrominoGhost.get());
+        }
+        catch (bool) {
+            m_TetrominoGhost->m_Y--;
+            break;
+        }
+    }
+    m_TetrominoGhost->m_X = m_Tetromino->m_X;
+}
+
+void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
+{
+    //drawing
+    auto& graphicsDevice = context.GetGraphicsDevice();
+    auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    ::MiniKit::Graphics::DrawInfo drawSurface{};
+    commandBuffer.SetImage(*m_Images["field"]);
+    
+    DrawBackground(context, drawSurface, commandBuffer);
+
+    DrawBlocks(context, drawSurface, commandBuffer);
 
     graphicsDevice.EndFrame(commandBuffer);
 }
@@ -128,6 +171,7 @@ void Game::AddToField() noexcept
         }
     }
     m_Tetromino = nullptr;
+    m_TetrominoGhost = nullptr;
 }
 
 void Game::ChangeState(States state) noexcept
@@ -135,15 +179,41 @@ void Game::ChangeState(States state) noexcept
     m_State = m_States[state].get();
 }
 
-void Game::CheckCollision() {
-    for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
-        for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-            if (m_Tetromino->m_Shape[y][x] &&
-                (m_Tetromino->m_Y + y >= g_FieldHeight || m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x])) {
+void Game::CheckCollision(Tetromino* tetromino) {
+    for (size_t y = 0; y < tetromino->m_Shape.size(); y++) {
+        for (size_t x = 0; x < tetromino->m_Shape[y].size(); x++) {
+            if (tetromino->m_Shape[y][x] &&
+                (tetromino->m_Y + y >= g_FieldHeight || m_Field[tetromino->m_Y + y][tetromino->m_X + x])) {
                 throw true;
             }
         }
     }
+}
+
+void Game::CheckSideCollision(int step) {
+    for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
+        for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
+            if (m_Tetromino->m_Shape[y][x])
+            {
+                int expectedX = m_Tetromino->m_X + x + step;
+                int expectedY = m_Tetromino->m_Y + y;
+                if (expectedX < 0 || expectedX >= g_FieldWidth ||
+                    m_Field[expectedY][expectedX]) {
+                    throw true;
+                }
+            }
+        }
+    }
+}
+
+void Game::MoveSide(int step) {
+    try {
+        CheckSideCollision(step);
+    }
+    catch (bool) {
+        return;
+    }
+    m_Tetromino->moveSide(step);
 }
 
 void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
