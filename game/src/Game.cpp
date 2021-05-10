@@ -301,6 +301,15 @@ void GridManager::ClearLines() noexcept {
             game->m_Field[line][x] = nullptr;
         }
     }
+    for (int y = m_compleatedLines.back() - 1; y >= 0; y--) {
+        for (int x = 0; x < g_FieldWidth; x++) {
+            if (game->m_Field[y][x]) {
+                game->m_Field[y + m_compleatedLines.size()][x] = std::make_unique<Block> ();
+                game->m_Field[y + m_compleatedLines.size()][x]->color = game->m_Field[y][x]->color;
+                game->m_Field[y][x] = nullptr;
+            }
+        }
+    }
     m_compleatedLines.clear();
 }
 
