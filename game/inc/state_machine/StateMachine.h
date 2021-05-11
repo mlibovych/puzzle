@@ -66,6 +66,7 @@ public:
     ~SpawnState();
 
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Enter() noexcept override;
 };
 
 enum class Direction
@@ -95,8 +96,6 @@ public:
     ~LineCompleatedState();
 
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Enter() noexcept override;
 };
 
-// class PauseState : public GameState {
-// public:
-// };

@@ -46,7 +46,7 @@ void GameState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
 SpawnState::SpawnState(std::shared_ptr<Game> game) :
             GameState(game)
 {
-    game->m_FrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    
 }
 
 SpawnState::~SpawnState()
@@ -71,6 +71,13 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
     }
     
     GameState::Tick(context);
+}
+
+void SpawnState::Enter() noexcept
+{   
+    auto game = m_game.lock();
+
+    game->m_FrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 PositioningState::PositioningState(std::shared_ptr<Game> game) :
@@ -212,8 +219,19 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         return;
     }
 
-    game->m_GridManager->ClearLines();
-    game->ChangeState(States::SPAWN);
+    uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    if (now - game->m_LineCompleatedTime > 1000){
+        game->m_GridManager->ClearLines();
+        game->ChangeState(States::SPAWN);
+    }
     
     GameState::Tick(context);
+}
+
+void LineCompleatedState::Enter() noexcept
+{   
+    auto game = m_game.lock();
+
+    game->m_LineCompleatedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

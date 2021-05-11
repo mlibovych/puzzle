@@ -8,7 +8,7 @@
     m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
     m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
 
-    m_State = States::SPAWN;
+    ChangeState(States::SPAWN);
 
     //event system
     m_EventSystem = std::make_unique<EventSystem>();

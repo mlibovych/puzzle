@@ -97,6 +97,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
     uint64_t m_FrameTime;
     uint64_t m_SideMovingTime;
+    uint64_t m_LineCompleatedTime;
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
