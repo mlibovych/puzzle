@@ -7,7 +7,8 @@
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
     m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
     m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
-    m_State = m_States[States::SPAWN].get();
+
+    m_State = States::SPAWN;
 
     //event system
     m_EventSystem = std::make_unique<EventSystem>();
@@ -66,8 +67,7 @@
 
 void Game::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
-    // std::cout << context.GetFrameDelta() << std::endl;
-    m_State->Tick(context);
+    m_States[m_State]->Tick(context);
 }
 
 void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
@@ -169,7 +169,8 @@ void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
 
 void Game::ChangeState(States state) noexcept
 {
-    m_State = m_States[state].get();
+    m_State = state;
+    m_States[state]->Enter();
 }
 
 void Game::CheckCollision(Tetromino* tetromino) {
@@ -221,7 +222,7 @@ void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platfor
             if (!m_KeyState[event.keycode])
             {
                 m_KeyState[event.keycode] = true;
-                m_State->KeyDown(event);
+                m_States[m_State]->KeyDown(event);
             }
             break;
         }
@@ -243,7 +244,7 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
             if (m_KeyState[event.keycode])
             {
                 m_KeyState[event.keycode] = false;
-                m_State->KeyUp(event);
+                m_States[m_State]->KeyUp(event);
             }
             break;
         }

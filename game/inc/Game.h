@@ -82,7 +82,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class GridResolver;
     friend class GridManager;
 
-    StateMachine* m_State;
+    States m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
 
     ::std::unique_ptr<EventSystem> m_EventSystem { nullptr };

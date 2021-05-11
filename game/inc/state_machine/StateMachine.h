@@ -41,6 +41,7 @@ public:
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept = 0;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
+    virtual void Enter() noexcept = 0;
 };
 
 class GameState : public StateMachine
@@ -50,9 +51,13 @@ public:
     GameState(std::shared_ptr<Game> game);
     ~GameState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    void Tick(::MiniKit::Engine::Context& context) noexcept;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    virtual void Enter() noexcept override
+    {
+
+    }
 };
 
 class SpawnState : public GameState {
