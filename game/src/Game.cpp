@@ -224,6 +224,7 @@ void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platfor
     {
         case  Keycode::KeyLeft:
         case  Keycode::KeyRight:
+        case  Keycode::KeyDown:
         {
             if (!m_KeyState[event.keycode])
             {
@@ -246,6 +247,7 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
     {
         case  Keycode::KeyLeft:
         case  Keycode::KeyRight:
+        case  Keycode::KeyDown:
         {
             if (m_KeyState[event.keycode])
             {

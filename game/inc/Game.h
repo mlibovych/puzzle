@@ -119,7 +119,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
-    float m_FallSpeed { 0.200f };
+    float m_FallSpeed { 0.600f };
+    float m_SoftDropSpeed { 0.100f };
     float m_SideSpeed { 0.100f };
     float m_LockDelay { 0.500f };
 

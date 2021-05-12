@@ -137,7 +137,9 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     //down
     m_DownValue += context.GetFrameDelta();
 
-    if (m_DownValue > game->m_FallSpeed) {
+    auto speed = m_SoftDrop ? game->m_SoftDropSpeed : game->m_FallSpeed;
+    
+    if (m_DownValue > speed) {
         m_DownValue = 0.0f;
         if (!m_Lock) {
             game->m_Tetromino->moveDown();
@@ -174,6 +176,11 @@ void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexc
             Start(Direction::RIGHT);
             break;
         }
+        case Keycode::KeyDown:
+        {
+            m_SoftDrop = true;
+            break;
+        }
         default:
             break;
     }
@@ -191,6 +198,11 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
         case  Keycode::KeyRight:
         {   
             Stop(Direction::RIGHT);
+            break;
+        }
+        case Keycode::KeyDown:
+        {
+            m_SoftDrop = false;
             break;
         }
         default:

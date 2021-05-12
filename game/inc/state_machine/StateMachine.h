@@ -76,6 +76,7 @@ class PositioningState : public GameState {
     float m_LockValue { 0.0f };
 
     bool m_Lock = false;
+    bool m_SoftDrop = false;
 
     std::unordered_map<Direction, int> m_DirectionsQueue;
     std::unordered_map<Direction, int> m_DirectionStep;
