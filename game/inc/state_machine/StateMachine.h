@@ -11,11 +11,6 @@
 #include <MiniKit/MiniKit.hpp>
 #include <Tetromino.h>
 
-constexpr int g_FieldWidth = 10;
-constexpr int g_FieldHeight = 20;
-
-constexpr int g_SideMovingSpeed = 100;
-
 class Game;
 
 enum class States
@@ -91,11 +86,13 @@ public:
 };
 
 class LineCompleatedState : public GameState {
+    float m_Value { 0.0f };
 public:
     LineCompleatedState(std::shared_ptr<Game> game);
     ~LineCompleatedState();
 
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
     virtual void Enter() noexcept override;
+    void GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept;
 };
 

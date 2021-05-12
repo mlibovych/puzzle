@@ -108,13 +108,13 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
     //down
-    if (now - game->m_FrameTime > 200) {
+    if (now - game->m_FrameTime > game->m_FallSpeed) {
         game->m_FrameTime = now;
         game->m_Tetromino->moveDown();
     }
 
     //side
-    if (now - game->m_SideMovingTime > g_SideMovingSpeed) {
+    if (now - game->m_SideMovingTime > game->m_SideSpeed) {
         game->m_SideMovingTime = now;
         for (const auto& [key, value] : m_DirectionsQueue) {
             if (value == 1) {
@@ -210,6 +210,30 @@ LineCompleatedState::~LineCompleatedState()
     
 }
 
+float GetAlpha(float delta) {
+    float res = 1.0f - delta * (1.0f / g_LineCompleatedAnimationTime);
+
+    if (res <= 0) {
+        return 0;
+    }
+
+    return res;
+}
+
+void LineCompleatedState::GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept
+{
+    float res = 1.0f - delta * (1.0f / g_LineCompleatedAnimationTime);
+
+    if (res <= 0) {
+        color = g_LineCompleatedColor;
+    }
+    else {
+        color.red = color.red + ((g_LineCompleatedColor.red - color.red) / (g_LineCompleatedAnimationTime - m_Value)) * (delta);
+        color.blue = color.blue + ((g_LineCompleatedColor.blue - color.blue) / (g_LineCompleatedAnimationTime - m_Value)) * (delta);
+        color.green = color.green + ((g_LineCompleatedColor.green - color.green) / (g_LineCompleatedAnimationTime - m_Value)) * (delta);
+    }
+}
+
 void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
     
@@ -219,11 +243,20 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         return;
     }
 
-    uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-    if (now - game->m_LineCompleatedTime > 1000){
+    auto delta = context.GetFrameDelta();
+    m_Value += delta;
+    if (m_Value >= g_LineCompleatedAnimationTime) {
+        m_Value = 0.0f;
         game->m_GridManager->ClearLines();
         game->ChangeState(States::SPAWN);
+    }
+    for (int line : game->m_GridManager->GetCompleatedLines()) {
+        for (int x = 0; x < g_FieldWidth; x++) {
+            if (game->m_Field[line][x]) {
+                GetColor(game->m_Field[line][x]->color, delta);
+                game->m_Field[line][x]->color.alpha = GetAlpha(m_Value);
+            }
+        }
     }
     
     GameState::Tick(context);
@@ -231,7 +264,5 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 
 void LineCompleatedState::Enter() noexcept
 {   
-    auto game = m_game.lock();
-
-    game->m_LineCompleatedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    m_Value = 0.0f;
 }

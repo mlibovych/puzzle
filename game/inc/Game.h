@@ -12,10 +12,16 @@
 
 #include <MiniKit/MiniKit.hpp>
 
+constexpr int g_FieldWidth = 10;
+constexpr int g_FieldHeight = 20;
+
 constexpr int g_BlockWidth = 80;
 constexpr int g_AppWidth = 800;
 constexpr int g_AppHeight = 900;
 constexpr int g_Padding = 10;
+
+constexpr float g_LineCompleatedAnimationTime = 0.5f;
+const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
 
 const std::string g_BlockPath = "assets/sq.png"; 
 const std::string g_BackPath = "assets/3.png";
@@ -69,6 +75,7 @@ public:
 
     void AddToField() noexcept;
     void ClearLines() noexcept;
+    std::vector<int>& GetCompleatedLines() noexcept;
 };
 
 class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
@@ -97,9 +104,11 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
     uint64_t m_FrameTime;
     uint64_t m_SideMovingTime;
-    uint64_t m_LineCompleatedTime;
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
+
+    int m_FallSpeed = 200;
+    int m_SideSpeed = 100;
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     

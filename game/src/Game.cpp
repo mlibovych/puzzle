@@ -314,6 +314,11 @@ void GridManager::ClearLines() noexcept {
     m_compleatedLines.clear();
 }
 
+std::vector<int>& GridManager::GetCompleatedLines() noexcept
+{
+    return m_compleatedLines;
+}
+
 void GridManager::AddToField() noexcept
 {   
     auto game = m_game.lock();
