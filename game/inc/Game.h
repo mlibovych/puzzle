@@ -121,6 +121,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     float m_FallSpeed { 0.200f };
     float m_SideSpeed { 0.100f };
+    float m_LockDelay { 0.500f };
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
@@ -128,7 +129,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void ChangeState(States state) noexcept;
-    void CheckCollision(Tetromino* tetromino);
+    bool CheckCollision(Tetromino* tetromino);
     void CheckSideCollision(int step);
     void MoveSide(int step);
     void GetGhostPosition();

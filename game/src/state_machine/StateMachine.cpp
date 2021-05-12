@@ -100,6 +100,8 @@ void PositioningState::Enter() noexcept
 {
     m_DownValue = 0.0f;
     m_SideValue = 0.0f;
+    m_LockValue = 0.0f;
+    m_Lock = false;
 }
 
 void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
@@ -110,18 +112,41 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     if (!game) {
         return;
     }
+ 
+    //ghost
+    game->GetGhostPosition();
     
-    //moving
-    m_DownValue += context.GetFrameDelta();
-    m_SideValue += context.GetFrameDelta();
+    //check state
+    if (game->CheckCollision(game->m_Tetromino.get())) {
+        if (m_LockValue >= game->m_LockDelay) {
+            game->m_GridManager->AddToField();
+            game->ChangeState(States::SPAWN);
+        }
+        else {
+            m_LockValue += context.GetFrameDelta();
+            m_Lock = true;
+        }
+    }
+    else {
+        m_Lock = false;
+        m_LockValue = 0.0f;
+    }
 
+    //moving
+    
     //down
+    m_DownValue += context.GetFrameDelta();
+
     if (m_DownValue > game->m_FallSpeed) {
         m_DownValue = 0.0f;
-        game->m_Tetromino->moveDown();
+        if (!m_Lock) {
+            game->m_Tetromino->moveDown();
+        }
     }
 
     //side
+    m_SideValue += context.GetFrameDelta();
+
     if (m_SideValue > game->m_SideSpeed) {
         m_SideValue = 0.0f;
         for (const auto& [key, value] : m_DirectionsQueue) {
@@ -131,18 +156,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
- 
-    //ghost
-    game->GetGhostPosition();
-    
-    //check state
-    try {
-        game->CheckCollision(game->m_Tetromino.get());
-    }
-    catch (bool) {
-        game->m_GridManager->AddToField();
-        game->ChangeState(States::SPAWN);
-    }
+
     GameState::Tick(context);
 }
 
@@ -221,7 +235,7 @@ LineCompleatedState::~LineCompleatedState()
 
 float LineCompleatedState::GetAlpha() noexcept
 {
-    float res = 1.0f - m_Value * (1.0f / g_LineCompleatedAnimationTime);
+    float res = g_LineCompleatedColor.alpha - m_Value * (g_LineCompleatedColor.alpha / g_LineCompleatedAnimationTime);
 
     if (res <= 0) {
         return 0;

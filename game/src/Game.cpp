@@ -127,7 +127,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
         }
     }
 
-    //draw blocks
+    // draw blocks
     for (size_t y = 0; y < m_Field.size(); y++) {
         for (size_t x = 0; x < m_Field[y].size(); x++) {
             if (m_Field[y][x]) {
@@ -145,11 +145,7 @@ void Game::GetGhostPosition()
 {
     for (int y = m_Tetromino->m_Y; y < g_FieldHeight; y++) {
         m_TetrominoGhost->m_Y = y;
-        try {
-            CheckCollision(m_TetrominoGhost.get());
-        }
-        catch (bool) {
-            m_TetrominoGhost->m_Y--;
+        if (CheckCollision(m_TetrominoGhost.get())) {
             break;
         }
     }
@@ -178,15 +174,20 @@ void Game::ChangeState(States state) noexcept
     m_States[state]->Enter();
 }
 
-void Game::CheckCollision(Tetromino* tetromino) {
+bool Game::CheckCollision(Tetromino* tetromino) {
     for (size_t y = 0; y < tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < tetromino->m_Shape[y].size(); x++) {
+            int expectedX = tetromino->m_X + x;
+            int expectedY = tetromino->m_Y + y + 1;
+
             if (tetromino->m_Shape[y][x] &&
-                (tetromino->m_Y + y >= g_FieldHeight || m_Field[tetromino->m_Y + y][tetromino->m_X + x])) {
-                throw true;
+                (expectedY >= g_FieldHeight || m_Field[expectedY][expectedX])) {
+                return true;
             }
         }
     }
+
+    return false;
 }
 
 void Game::CheckSideCollision(int step) {
@@ -330,9 +331,14 @@ void GridManager::AddToField() noexcept
 
     for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
-            if (game->m_Tetromino->m_Shape[y][x] && game->m_Tetromino->m_Y + y > 0) {
-                game->m_Field[game->m_Tetromino->m_Y + y - 1][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
-                game->m_Field[game->m_Tetromino->m_Y + y - 1][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
+            if (game->m_Tetromino->m_Shape[y][x]) {
+                if (!game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                    if (game->m_Tetromino->m_Y + y == 0) {
+                        exit(0);
+                    }
+                    game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
+                    game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
+                }
             }
         }
     }

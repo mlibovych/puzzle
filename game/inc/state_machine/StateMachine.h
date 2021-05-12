@@ -73,6 +73,9 @@ enum class Direction
 class PositioningState : public GameState {
     float m_DownValue { 0.0f };
     float m_SideValue { 0.0f };
+    float m_LockValue { 0.0f };
+
+    bool m_Lock = false;
 
     std::unordered_map<Direction, int> m_DirectionsQueue;
     std::unordered_map<Direction, int> m_DirectionStep;
