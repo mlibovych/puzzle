@@ -77,9 +77,8 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 
 void SpawnState::Enter() noexcept
 {   
-    auto game = m_game.lock();
 
-    game->m_FrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
 }
 
 PositioningState::PositioningState(std::shared_ptr<Game> game) :
@@ -97,6 +96,12 @@ PositioningState::~PositioningState()
 
 }
 
+void PositioningState::Enter() noexcept
+{
+    m_DownValue = 0.0f;
+    m_SideValue = 0.0f;
+}
+
 void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
     
@@ -105,22 +110,24 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     if (!game) {
         return;
     }
-
-    //moving
-    uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
+    //moving
+    m_DownValue += context.GetFrameDelta();
+    m_SideValue += context.GetFrameDelta();
+
     //down
-    if (now - game->m_FrameTime > game->m_FallSpeed) {
-        game->m_FrameTime = now;
+    if (m_DownValue > game->m_FallSpeed) {
+        m_DownValue = 0.0f;
         game->m_Tetromino->moveDown();
     }
 
     //side
-    if (now - game->m_SideMovingTime > game->m_SideSpeed) {
-        game->m_SideMovingTime = now;
+    if (m_SideValue > game->m_SideSpeed) {
+        m_SideValue = 0.0f;
         for (const auto& [key, value] : m_DirectionsQueue) {
             if (value == 1) {
                 game->MoveSide(m_DirectionStep[key]);
+                break;
             }
         }
     }
@@ -181,8 +188,8 @@ void PositioningState::Start(Direction direction) noexcept
 {
     auto game = m_game.lock();
     game->MoveSide(m_DirectionStep[direction]);
-    game->m_SideMovingTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
+    m_SideValue = 0.0f;
+    
     for (auto& [key, value] : m_DirectionsQueue) {
         if (value) {
             value++;
@@ -250,7 +257,6 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
     m_Value += delta;
     if (m_Value >= g_LineCompleatedAnimationTime) {
         game->m_ScoreManager->AddtoScore();
-        std::cout << game->m_Score << std::endl;
         game->m_GridManager->ClearLines();
         game->ChangeState(States::SPAWN);
     }

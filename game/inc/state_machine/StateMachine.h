@@ -71,6 +71,9 @@ enum class Direction
 };
 
 class PositioningState : public GameState {
+    float m_DownValue { 0.0f };
+    float m_SideValue { 0.0f };
+
     std::unordered_map<Direction, int> m_DirectionsQueue;
     std::unordered_map<Direction, int> m_DirectionStep;
 public:
@@ -83,6 +86,8 @@ public:
 
     void Start(Direction direction) noexcept;
     void Stop(Direction direction) noexcept;
+
+    virtual void Enter() noexcept override;
 };
 
 class LineCompleatedState : public GameState {

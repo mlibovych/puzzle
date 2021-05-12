@@ -116,13 +116,11 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
-    uint64_t m_FrameTime;
-    uint64_t m_SideMovingTime;
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
-    int m_FallSpeed { 200 };
-    int m_SideSpeed { 100 };
+    float m_FallSpeed { 0.200f };
+    float m_SideSpeed { 0.100f };
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
