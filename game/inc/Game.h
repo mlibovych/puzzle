@@ -53,7 +53,7 @@ public:
 
     }
 
-    virtual void react(const GameEvent& event) = 0;
+    virtual void React(const GameEvent& event) noexcept = 0;
 };
 
 
@@ -62,7 +62,7 @@ class GridResolver : public GameObject
 public:
     GridResolver(std::shared_ptr<Game> game);
 
-    virtual void react(const GameEvent& event) noexcept;
+    virtual void React(const GameEvent& event) noexcept;
 };
 
 class GridManager : public GameObject
@@ -71,11 +71,21 @@ class GridManager : public GameObject
 public:
     GridManager(std::shared_ptr<Game> game);
 
-    virtual void react(const GameEvent& event) noexcept;
+    virtual void React(const GameEvent& event) noexcept;
 
     void AddToField() noexcept;
     void ClearLines() noexcept;
     std::vector<int>& GetCompleatedLines() noexcept;
+};
+
+class ScoreManager : public GameObject
+{
+    int m_compleatedLines;
+public:
+    ScoreManager(std::shared_ptr<Game> game);
+
+    virtual void React(const GameEvent& event) noexcept;
+    void AddtoScore();
 };
 
 class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
@@ -88,6 +98,9 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     friend class GridResolver;
     friend class GridManager;
+    friend class ScoreManager;
+
+    int m_Score { 0 };
 
     States m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
@@ -95,6 +108,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::unique_ptr<EventSystem> m_EventSystem { nullptr };
     ::std::unique_ptr<GridResolver> m_GridResolver { nullptr };
     ::std::unique_ptr<GridManager> m_GridManager { nullptr };
+    ::std::unique_ptr<ScoreManager> m_ScoreManager { nullptr };
 
     ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
 
@@ -107,8 +121,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
-    int m_FallSpeed = 200;
-    int m_SideSpeed = 100;
+    int m_FallSpeed { 200 };
+    int m_SideSpeed { 100 };
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     

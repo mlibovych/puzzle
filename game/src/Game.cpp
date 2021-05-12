@@ -3,6 +3,9 @@
 
 ::std::error_code Game::Start(::MiniKit::Engine::Context& context) noexcept
 {   
+    //settings
+    //get teetrominos
+
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
     m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
@@ -14,9 +17,11 @@
     m_EventSystem = std::make_unique<EventSystem>();
     m_GridResolver = std::make_unique<GridResolver> (shared_from_this());
     m_GridManager = std::make_unique<GridManager> (shared_from_this());
+    m_ScoreManager = std::make_unique<ScoreManager> (shared_from_this());
 
     m_EventSystem->Subscribe(EventType::BLOCK_SET_EVENT, m_GridResolver.get());
     m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_GridManager.get());
+    m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_ScoreManager.get());
 
     //window
     auto& window = context.GetWindow();
@@ -259,7 +264,7 @@ GridResolver::GridResolver(std::shared_ptr<Game> game) : GameObject(game)
 
 }
 
-void GridResolver::react(const GameEvent& event) noexcept
+void GridResolver::React(const GameEvent& event) noexcept
 {   
     auto game = m_game.lock();
     std::vector<int> compleatedLines;
@@ -289,7 +294,7 @@ GridManager::GridManager(std::shared_ptr<Game> game) : GameObject(game)
 
 }
 
-void GridManager::react(const GameEvent& event) noexcept
+void GridManager::React(const GameEvent& event) noexcept
 {   
     m_compleatedLines = event.lines;
 }
@@ -342,4 +347,22 @@ void GridManager::AddToField() noexcept
 
     game->m_Tetromino = nullptr;
     game->m_TetrominoGhost = nullptr;
+}
+
+ScoreManager::ScoreManager(std::shared_ptr<Game> game) : GameObject(game)
+{
+
+}
+
+void ScoreManager::React(const GameEvent& event) noexcept
+{
+    m_compleatedLines = event.lines.size();
+}
+
+void ScoreManager::AddtoScore()
+{   
+    auto game = m_game.lock();
+
+    game->m_Score += m_compleatedLines;
+    m_compleatedLines = 0;
 }

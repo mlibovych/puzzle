@@ -94,5 +94,6 @@ public:
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
     virtual void Enter() noexcept override;
     void GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept;
+    float GetAlpha() noexcept;
 };
 

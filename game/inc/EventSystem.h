@@ -25,12 +25,12 @@ public:
 
     }
 
-    virtual void react(const GameEvent& event) = 0;
+    virtual void React(const GameEvent& event) noexcept = 0;
 };
 
 class EventSystem
 {
-    std::unordered_map<EventType, Object*> m_subscribers;
+    std::unordered_multimap<EventType, Object*> m_subscribers;
     std::queue<GameEvent> m_events;
 public:
     void Subscribe(EventType type, Object* receiver) noexcept;

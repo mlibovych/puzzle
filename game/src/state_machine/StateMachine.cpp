@@ -64,9 +64,11 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->ChangeState(States::LINE_COMPLEATED);
     }
     else {
+        //tereomino
         game->m_EventSystem->ProccedEvent();
         game->m_Tetromino = ::std::make_unique<Tetromino> ();
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
+
         game->ChangeState(States::POSITIONING);
     }
     
@@ -210,8 +212,9 @@ LineCompleatedState::~LineCompleatedState()
     
 }
 
-float GetAlpha(float delta) {
-    float res = 1.0f - delta * (1.0f / g_LineCompleatedAnimationTime);
+float LineCompleatedState::GetAlpha() noexcept
+{
+    float res = 1.0f - m_Value * (1.0f / g_LineCompleatedAnimationTime);
 
     if (res <= 0) {
         return 0;
@@ -222,7 +225,7 @@ float GetAlpha(float delta) {
 
 void LineCompleatedState::GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept
 {
-    float res = 1.0f - delta * (1.0f / g_LineCompleatedAnimationTime);
+    float res = 1.0f - m_Value * (1.0f / g_LineCompleatedAnimationTime);
 
     if (res <= 0) {
         color = g_LineCompleatedColor;
@@ -246,7 +249,8 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
     auto delta = context.GetFrameDelta();
     m_Value += delta;
     if (m_Value >= g_LineCompleatedAnimationTime) {
-        m_Value = 0.0f;
+        game->m_ScoreManager->AddtoScore();
+        std::cout << game->m_Score << std::endl;
         game->m_GridManager->ClearLines();
         game->ChangeState(States::SPAWN);
     }
@@ -254,7 +258,7 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         for (int x = 0; x < g_FieldWidth; x++) {
             if (game->m_Field[line][x]) {
                 GetColor(game->m_Field[line][x]->color, delta);
-                game->m_Field[line][x]->color.alpha = GetAlpha(m_Value);
+                game->m_Field[line][x]->color.alpha = GetAlpha();
             }
         }
     }
@@ -265,4 +269,5 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 void LineCompleatedState::Enter() noexcept
 {   
     m_Value = 0.0f;
+    //recalculate speed
 }

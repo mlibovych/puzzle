@@ -2,8 +2,8 @@
 
 void EventSystem::Subscribe(EventType type, Object* receiver) noexcept
 {
-    // m_subscribers.insert(decltype(m_subscribers)::value_type(type, receiver));
-    m_subscribers[type] = receiver;
+    m_subscribers.insert(decltype(m_subscribers)::value_type(type, receiver));
+    // m_subscribers[type] = receiver;
 }
 
 void EventSystem::AddEvent(GameEvent&& event) noexcept
@@ -15,8 +15,13 @@ void EventSystem::ProccedEvent() noexcept
 {   
     if (HaveEvents()) {
         auto& event = m_events.front();
-
-        m_subscribers[event.eventType]->react(event);
+        
+        for (auto& [key, value] : m_subscribers) {
+            if (key == event.eventType) {
+                value->React(event);
+            }
+            // m_subscribers[event.eventType]->React(event);
+        }
         m_events.pop();
     }
 }
