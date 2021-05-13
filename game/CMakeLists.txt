@@ -10,10 +10,10 @@ set(TARGET puzzle)
 
 project(${TARGET} LANGUAGES CXX)
 
-set (SOURCES src/main.cpp src/Game.cpp src/state_machine/StateMachine.cpp src/tetroninos/Tetromino.cpp
-    src/EventSystem.cpp)
+set (SOURCES src/main.cpp src/Game.cpp src/state_machine/StateMachine.cpp src/Tetromino.cpp
+    src/EventSystem.cpp src/Settings.cpp)
 
-include_directories(inc inc/state_machine inc/tetrominos)
+include_directories(inc inc/state_machine)
 
 add_executable(${TARGET} ${SOURCES})
 

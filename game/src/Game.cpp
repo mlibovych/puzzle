@@ -1,10 +1,32 @@
 #include <Game.h>
 #include <imgui.h>
 
+std::vector<std::vector<int>> g_Shape1
+{
+    {0, 1, 0},
+    {1, 1, 1},
+    {0, 0, 0},
+};
+
+std::vector<std::vector<int>> g_Shape2
+{
+    {0, 0, 0, 0},
+    {0, 1, 1, 0},
+    {0, 1, 1, 0},
+    {0, 0, 0, 0},
+};
+
+::MiniKit::Graphics::Color g_Color1 { 0.3f, 1.0f, 0.61f, 1.0f };
+
+::MiniKit::Graphics::Color g_Color2 { 0.7f, 0.2f, 0.4f, 1.0f };
+
+
 ::std::error_code Game::Start(::MiniKit::Engine::Context& context) noexcept
 {   
     //settings
     //get teetrominos
+    m_Tetrominos.push_back(std::make_unique<Tetromino> (g_Color1, g_Shape1));
+    m_Tetrominos.push_back(std::make_unique<Tetromino> (g_Color2, g_Shape2));
 
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
@@ -331,6 +353,7 @@ void GridManager::AddToField() noexcept
 {   
     auto game = m_game.lock();
 
+    game->m_Tetromino->m_Color.alpha = 1.0f;
     for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
             if (game->m_Tetromino->m_Shape[y][x]) {

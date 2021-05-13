@@ -2,23 +2,15 @@
 
 Tetromino::Tetromino() 
 {   
-    for (auto& row : m_Shape) {
-        for (auto& col : row) {
-            col = 0;
-        }
-    }
-    //init
-    m_Shape[0][1] = 1;
-    m_Shape[1][0] = 1;
-    m_Shape[1][1] = 1;
-    m_Shape[1][2] = 1;
-    // m_Shape[1][3] = 1;
-    // m_Shape[1][4] = 1;
-
-    //position
-    m_X = 3;
-    m_Y = 0;
+    
 }
+
+Tetromino::Tetromino(const ::MiniKit::Graphics::Color& color, std::vector<std::vector<int>>& shape) 
+                    : m_Color(color), m_Shape(shape)
+{
+    
+}
+    
 
 Tetromino::Tetromino(const Tetromino& other) {
     m_Shape = other.m_Shape;

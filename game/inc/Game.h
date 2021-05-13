@@ -7,8 +7,10 @@
 #include <vector>
 #include <unordered_map>
 
-#include <StateMachine.h>
 #include <EventSystem.h>
+#include <Tetromino.h>
+#include <Settings.h>
+#include <StateMachine.h>
 
 #include <MiniKit/MiniKit.hpp>
 
@@ -114,6 +116,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Field;
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
+
+    ::std::vector<::std::unique_ptr<Tetromino>> m_Tetrominos;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
 

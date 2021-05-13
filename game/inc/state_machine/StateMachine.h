@@ -5,11 +5,11 @@
 #include <iostream>
 #include <optional>
 #include <memory>
+#include <random>
 #include <vector>
 #include <unordered_map>
 
 #include <MiniKit/MiniKit.hpp>
-#include <Tetromino.h>
 
 class Game;
 
@@ -56,6 +56,7 @@ public:
 };
 
 class SpawnState : public GameState {
+    std::random_device m_Random;
 public:
     SpawnState(std::shared_ptr<Game> game);
     ~SpawnState();

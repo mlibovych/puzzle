@@ -65,8 +65,14 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
     }
     else {
         //tereomino
+        std::mt19937 gen(m_Random());
+        std::uniform_int_distribution<> dis(0, game->m_Tetrominos.size() - 1);
+        int position = dis(gen);
+
         game->m_EventSystem->ProccedEvent();
-        game->m_Tetromino = ::std::make_unique<Tetromino> ();
+        game->m_Tetromino = ::std::make_unique<Tetromino> (*game->m_Tetrominos[position].get());
+        game->m_Tetromino->m_X = 3;
+        game->m_Tetromino->m_Y = 0;
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
 
         game->ChangeState(States::POSITIONING);
@@ -124,12 +130,18 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
         }
         else {
             m_LockValue += context.GetFrameDelta();
-            m_Lock = true;
+            if (!m_Lock) {
+                m_Lock = true;
+                game->m_Tetromino->m_Color.alpha = 0.8f;
+            }
         }
     }
     else {
-        m_Lock = false;
-        m_LockValue = 0.0f;
+        if (m_Lock) {
+            m_Lock = false;
+            m_LockValue = 0.0f;
+            game->m_Tetromino->m_Color.alpha = 1.0f;
+        }
     }
 
     //moving
@@ -138,7 +150,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     m_DownValue += context.GetFrameDelta();
 
     auto speed = m_SoftDrop ? game->m_SoftDropSpeed : game->m_FallSpeed;
-    
+
     if (m_DownValue > speed) {
         m_DownValue = 0.0f;
         if (!m_Lock) {
