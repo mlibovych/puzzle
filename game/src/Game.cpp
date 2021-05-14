@@ -227,7 +227,11 @@ bool Game::CheckCollision(Tetromino* tetromino) {
     for (size_t y = 0; y < tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < tetromino->m_Shape[y].size(); x++) {
             int expectedX = tetromino->m_X + x;
-            int expectedY = tetromino->m_Y + y + 1;
+            int expectedY = tetromino->m_Y + static_cast<int> (y) + 1;
+
+            if (expectedY < 0) {
+                continue;
+            }
 
             if (tetromino->m_Shape[y][x] &&
                 (expectedY >= g_FieldHeight || m_Field[expectedY][expectedX])) {

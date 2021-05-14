@@ -95,6 +95,7 @@ public:
     virtual void Enter() noexcept override;
     void RotateRight() noexcept;
     void RotateLeft() noexcept;
+    void HardDrop() noexcept;
 };
 
 class LineCompleatedState : public GameState {

@@ -215,7 +215,8 @@ void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexc
             break;
         }
         case Keycode::KeySpace:
-        {
+        {   
+            HardDrop();
             break;
         }
         default:
@@ -245,6 +246,14 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
         default:
             break;
     }
+}
+
+void PositioningState::HardDrop() noexcept
+{
+    auto game = m_Game.lock();
+
+    m_LockValue = game->m_LockDelay;
+    game->m_Tetromino->m_Y = game->m_TetrominoGhost->m_Y;
 }
 
 void PositioningState::RotateRight() noexcept 
