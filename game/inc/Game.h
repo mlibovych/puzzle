@@ -103,6 +103,9 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class ScoreManager;
 
     int m_Score { 0 };
+    bool m_Ghost {true};
+
+    ::std::unique_ptr<Settings> m_Settings;
 
     States m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
@@ -120,6 +123,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::vector<::std::unique_ptr<Tetromino>> m_Tetrominos;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
+    int m_TetrominosFrequency {1};
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
@@ -138,6 +142,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     void CheckSideCollision(int step);
     void MoveSide(int step);
     void GetGhostPosition();
+
+    void UpdateSettings();
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     

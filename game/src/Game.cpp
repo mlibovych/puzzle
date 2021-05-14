@@ -1,32 +1,11 @@
 #include <Game.h>
 #include <imgui.h>
 
-std::vector<std::vector<int>> g_Shape1
-{
-    {0, 1, 0},
-    {1, 1, 1},
-    {0, 0, 0},
-};
-
-std::vector<std::vector<int>> g_Shape2
-{
-    {0, 0, 0, 0},
-    {0, 1, 1, 0},
-    {0, 1, 1, 0},
-    {0, 0, 0, 0},
-};
-
-::MiniKit::Graphics::Color g_Color1 { 0.3f, 1.0f, 0.61f, 1.0f };
-
-::MiniKit::Graphics::Color g_Color2 { 0.7f, 0.2f, 0.4f, 1.0f };
-
-
 ::std::error_code Game::Start(::MiniKit::Engine::Context& context) noexcept
 {   
     //settings
-    //get teetrominos
-    m_Tetrominos.push_back(std::make_unique<Tetromino> (g_Color1, g_Shape1));
-    m_Tetrominos.push_back(std::make_unique<Tetromino> (g_Color2, g_Shape2));
+    m_Settings = std::make_unique<Settings> ();
+    UpdateSettings();
 
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
@@ -97,6 +76,54 @@ void Game::Tick(::MiniKit::Engine::Context& context) noexcept
     m_States[m_State]->Tick(context);
 }
 
+void Game::UpdateSettings()
+{
+    m_Settings->Update();
+    
+    decltype(auto) ghost = m_Settings->GetData().GetInt("ghoste");
+    m_Ghost = ghost;
+
+    m_TetrominosFrequency = 0;
+
+    decltype(auto) tetrominos = m_Settings->GetData().GetVector("tetrominos");
+
+    for (size_t i = 0; i < tetrominos.size(); i++) {
+        FormatObject tetromino = std::get<FormatObject> (tetrominos[i]);
+
+        //frequency
+        int tetrominoFrequency = tetromino.GetInt("frequency");
+        m_TetrominosFrequency += tetrominoFrequency;
+
+        //shape
+        FormatObject shape = tetromino.GetObject("shape");
+        int rows = shape.GetInt("rows");
+
+        std::vector<std::vector<int>> tetrominoShape;
+        tetrominoShape.reserve(rows);
+
+        for (int i = 0; i < rows; i++) {
+            std::vector<int> tetrominoRow;
+            decltype(auto) row = shape.GetVector(std::to_string(i));
+            
+            tetrominoRow.reserve(rows);
+            for (auto el : row) {
+                tetrominoRow.push_back(std::get<int> (el));
+            }
+            tetrominoShape.push_back(tetrominoRow);
+        }
+
+        //color
+        ::MiniKit::Graphics::Color tetrominoColor;
+        decltype(auto) color = tetromino.GetVector("color");
+        tetrominoColor.red = std::get<float> (color[0]);
+        tetrominoColor.green = std::get<float> (color[1]);
+        tetrominoColor.blue = std::get<float> (color[2]);
+        tetrominoColor.alpha = std::get<float> (color[3]);
+
+        m_Tetrominos.push_back(std::make_unique<Tetromino> (tetrominoColor, tetrominoShape, tetrominoFrequency));
+    }
+}
+
 void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                           ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
@@ -118,7 +145,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     commandBuffer.SetImage(*m_Images["block"]);
 
     //ghost
-    if (m_TetrominoGhost) {
+    if (m_Ghost && m_TetrominoGhost) {
         for (size_t y = 0; y < m_TetrominoGhost->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
                 if (m_TetrominoGhost->m_Shape[y][x]) {

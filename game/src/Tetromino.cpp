@@ -5,8 +5,10 @@ Tetromino::Tetromino()
     
 }
 
-Tetromino::Tetromino(const ::MiniKit::Graphics::Color& color, std::vector<std::vector<int>>& shape) 
-                    : m_Color(color), m_Shape(shape)
+Tetromino::Tetromino(const ::MiniKit::Graphics::Color& color,
+                    std::vector<std::vector<int>>& shape,
+                    int frequency) 
+                    : m_Color(color), m_Shape(shape), m_SpawnFrequency(frequency)
 {
     
 }

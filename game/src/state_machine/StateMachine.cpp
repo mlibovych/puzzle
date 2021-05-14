@@ -66,11 +66,20 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
     else {
         //tereomino
         std::mt19937 gen(m_Random());
-        std::uniform_int_distribution<> dis(0, game->m_Tetrominos.size() - 1);
+        std::uniform_int_distribution<> dis(0, game->m_TetrominosFrequency - 1);
         int position = dis(gen);
+        int sumFrequency = 0;
 
         game->m_EventSystem->ProccedEvent();
-        game->m_Tetromino = ::std::make_unique<Tetromino> (*game->m_Tetrominos[position].get());
+
+        for (auto& tetromino : game->m_Tetrominos) {
+            sumFrequency +=tetromino->m_SpawnFrequency;
+            if (sumFrequency > position) {
+                game->m_Tetromino = ::std::make_unique<Tetromino> (*tetromino.get());
+                break;
+            }
+        }
+        
         game->m_Tetromino->m_X = 3;
         game->m_Tetromino->m_Y = 0;
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());

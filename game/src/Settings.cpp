@@ -2,7 +2,7 @@
 
 Settings::Settings()
 {
-
+    Update();
 }
 
 Settings::~Settings()
@@ -44,8 +44,6 @@ void Settings::ReadObject(std::ifstream& file, FormatObject& object)
             continue;
         }
         else if (c == '}') {
-            if (true && file.peek() == ',')
-                file.get();
             return;
         }
         else if (c == '\"') {
@@ -64,8 +62,6 @@ void Settings::ReadObject(std::ifstream& file, FormatObject& object)
                     break;
                 }
                 else if (c == '}') {
-                    if (true && file.peek() == ',')
-                        file.get();
                     return;
                 }
                 else {
@@ -215,4 +211,14 @@ std::vector<SimpleData> Settings::ReadVector(std::ifstream& file)
     }
 
     return result;
+}
+
+void Settings::Update()
+{
+    std::filesystem::file_time_type newTime = std::filesystem::last_write_time(g_ConfigFilePath);
+
+    if (m_Time!= newTime) {
+        ParseFile();
+    }
+    m_Time = newTime;
 }

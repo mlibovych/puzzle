@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <exception>
@@ -91,6 +92,7 @@ public:
 class Settings
 {
     FormatObject m_Data;
+    std::filesystem::file_time_type m_Time;
 public:
     Settings();
     ~Settings();
@@ -108,4 +110,6 @@ public:
     {
         return m_Data;
     }
+
+    void Update();
 };
