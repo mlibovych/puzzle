@@ -80,8 +80,10 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
         
-        game->m_Tetromino->m_X = 3;
-        game->m_Tetromino->m_Y = 0;
+        int displacement = game->m_Tetromino->m_Shape.size() % 2 ? 1 : 0;
+
+        game->m_Tetromino->m_X = g_FieldWidth / 2 - game->m_Tetromino->m_Shape.size() / 2 - displacement;
+        game->m_Tetromino->m_Y = 0 - game->m_Tetromino->m_Shape.size() / 2;
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
 
         game->ChangeState(States::POSITIONING);

@@ -148,7 +148,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     if (m_Ghost && m_TetrominoGhost) {
         for (size_t y = 0; y < m_TetrominoGhost->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
-                if (m_TetrominoGhost->m_Shape[y][x]) {
+                if (m_TetrominoGhost->m_Shape[y][x] && m_TetrominoGhost->m_Y + static_cast<int> (y) >= 0) {
                     drawSurface.tint = {1.0f, 1.0f, 1.0f, 0.5f};
                     drawSurface.position.x = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.x;
                     drawSurface.position.y = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.y;
@@ -164,7 +164,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     if (m_Tetromino) {
         for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-                if (m_Tetromino->m_Shape[y][x]) {
+                if (m_Tetromino->m_Shape[y][x] && m_Tetromino->m_Y + static_cast<int> (y) >= 0) {
                     drawSurface.tint = m_Tetromino->m_Color;
                     drawSurface.position.x = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
                     drawSurface.position.y = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
@@ -242,12 +242,11 @@ bool Game::CheckCollision(Tetromino* tetromino) {
 void Game::CheckSideCollision(int step) {
     for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
-            if (m_Tetromino->m_Shape[y][x])
-            {
+            if (m_Tetromino->m_Shape[y][x]) {
                 int expectedX = m_Tetromino->m_X + x + step;
                 int expectedY = m_Tetromino->m_Y + y;
                 if (expectedX < 0 || expectedX >= g_FieldWidth ||
-                    m_Field[expectedY][expectedX]) {
+                    (m_Tetromino->m_Y + static_cast<int> (y) >= 0 && m_Field[expectedY][expectedX])) {
                     throw true;
                 }
             }
