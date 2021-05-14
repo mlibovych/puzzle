@@ -51,17 +51,19 @@
     const auto imageScaleY = static_cast<float>(drawableHeight - g_Padding * 2) / static_cast<float>(imagesGridPixelsHeight);
     m_BlockSkale = {imageScaleY, imageScaleY};
 
-    const auto anchorPositionX =  -0.5f * drawableWidth + imageScaleY * imageSize.width / 2 + g_Padding;
-    const auto anchorPositionY =  0.5f * drawableHeight - imageScaleY * imageSize.width / 2 - g_Padding;
+    m_AnchorPositionX =  -0.5f * drawableWidth + imageScaleY * imageSize.width / 2 + g_Padding;
+    m_AnchorPositionY =  0.5f * drawableHeight - imageScaleY * imageSize.width / 2 - g_Padding;
 
     for (int y = g_FieldHeight - 1; y >= 0; y--) {
         for (int x = 0; x < g_FieldWidth; x++) {
             auto& cell = m_Background[y][x];
 
-            cell.position.x = anchorPositionX + imageScaleY * imageSize.width * x;
-            cell.position.y = anchorPositionY - imageScaleY * imageSize.width * y;
+            cell.position.x = m_AnchorPositionX + imageScaleY * imageSize.width * x;
+            cell.position.y = m_AnchorPositionY - imageScaleY * imageSize.width * y;
         }
     }
+
+    m_NextTetrominoX = (drawableWidth - (m_BlockSkale.x * imageSize.width * g_FieldWidth + g_Padding * 2)) / 2 - m_BlockSkale.x * imageSize.width * 2;
 
     return {};
 }
@@ -168,6 +170,25 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
                     drawSurface.tint = m_Tetromino->m_Color;
                     drawSurface.position.x = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
                     drawSurface.position.y = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
+                    drawSurface.scale = m_BlockSkale;
+
+                    commandBuffer.Draw(drawSurface);
+                }
+            }
+        }
+    }
+
+    //next
+    const auto& imageSize = m_Images["field"]->GetSize();
+    auto displace = m_NextTetromino->m_Shape.size() == 4 ? 0 : 1;
+
+    if (m_NextTetromino) {
+        for (size_t y = 0; y < m_NextTetromino->m_Shape.size(); y++) {
+            for (size_t x = 0; x < m_NextTetromino->m_Shape[y].size(); x++) {
+                if (m_NextTetromino->m_Shape[y][x]) {
+                    drawSurface.tint = m_NextTetromino->m_Color;
+                    drawSurface.position.x = m_AnchorPositionX + m_BlockSkale.x * imageSize.width * (g_FieldWidth + x + displace) + m_NextTetrominoX;
+                    drawSurface.position.y = m_AnchorPositionY - m_BlockSkale.y * imageSize.height * y - g_NextTetrominoY;
                     drawSurface.scale = m_BlockSkale;
 
                     commandBuffer.Draw(drawSurface);

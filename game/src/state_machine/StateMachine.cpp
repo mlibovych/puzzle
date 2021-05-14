@@ -72,10 +72,25 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 
         game->m_EventSystem->ProccedEvent();
 
+        
+
+        if (game->m_NextTetromino) {
+            game->m_Tetromino = ::std::make_unique<Tetromino> (*game->m_NextTetromino);
+        }
+        else {
+            for (auto& tetromino : game->m_Tetrominos) {
+                sumFrequency +=tetromino->m_SpawnFrequency;
+                if (sumFrequency > position) {
+                    game->m_Tetromino = ::std::make_unique<Tetromino> (*tetromino.get());
+                    break;
+                }
+            }
+        }
+
         for (auto& tetromino : game->m_Tetrominos) {
             sumFrequency +=tetromino->m_SpawnFrequency;
             if (sumFrequency > position) {
-                game->m_Tetromino = ::std::make_unique<Tetromino> (*tetromino.get());
+                game->m_NextTetromino = ::std::make_unique<Tetromino> (*tetromino.get());
                 break;
             }
         }

@@ -22,6 +22,8 @@ constexpr int g_AppWidth = 800;
 constexpr int g_AppHeight = 900;
 constexpr int g_Padding = 10;
 
+constexpr int g_NextTetrominoY = 180;
+
 constexpr float g_LineCompleatedAnimationTime = 0.5f;
 const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
 
@@ -123,6 +125,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::vector<::std::unique_ptr<Tetromino>> m_Tetrominos;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
+    ::std::unique_ptr<Tetromino> m_NextTetromino { nullptr };
     int m_TetrominosFrequency {1};
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
@@ -131,6 +134,10 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     float m_SoftDropSpeed { 0.100f };
     float m_SideSpeed { 0.100f };
     float m_LockDelay { 0.500f };
+
+    float m_AnchorPositionY { 0.0f };
+    float m_AnchorPositionX { 0.0f };
+    float m_NextTetrominoX { 0.0f };
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
