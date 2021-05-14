@@ -3,7 +3,7 @@
 #include <Game.h>
 
 int main(int argc, char** argv)
-{
+{   
     auto game = std::make_shared<Game> ();
  
     ::MiniKit::Engine::StartupInfo startupInfo{};

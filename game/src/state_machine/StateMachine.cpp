@@ -3,7 +3,7 @@
 
 using ::MiniKit::Platform::Keycode;
 
-StateMachine::StateMachine(std::shared_ptr<Game> game) : m_game(game)
+StateMachine::StateMachine(std::shared_ptr<Game> game) : m_Game(game)
 {
 
 }
@@ -25,7 +25,7 @@ GameState::~GameState()
 
 void GameState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
-    auto game = m_game.lock();
+    auto game = m_Game.lock();
 
     if (game->m_EventSystem->HaveEvents()) {
         game->m_EventSystem->ProccedEvent();
@@ -56,7 +56,7 @@ SpawnState::~SpawnState()
 
 void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 {
-    auto game = m_game.lock();
+    auto game = m_Game.lock();
 
     //events
     if (game->m_EventSystem->HaveEvents() &&
@@ -124,7 +124,7 @@ void PositioningState::Enter() noexcept
 void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
     
-    auto game = m_game.lock();
+    auto game = m_Game.lock();
     
     if (!game) {
         return;
@@ -165,7 +165,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     if (m_DownValue > speed) {
         m_DownValue = 0.0f;
         if (!m_Lock) {
-            game->m_Tetromino->moveDown();
+            game->m_Tetromino->MoveDown();
         }
     }
 
@@ -204,6 +204,20 @@ void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexc
             m_SoftDrop = true;
             break;
         }
+        case Keycode::KeyUp:
+        {
+            RotateRight();
+            break;
+        }
+        case Keycode::KeyZ:
+        {
+            RotateLeft();
+            break;
+        }
+        case Keycode::KeySpace:
+        {
+            break;
+        }
         default:
             break;
     }
@@ -233,9 +247,25 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
     }
 }
 
+void PositioningState::RotateRight() noexcept 
+{
+    auto game = m_Game.lock();
+
+    game->m_Tetromino->RotateRight();
+    game->m_TetrominoGhost->RotateRight();
+}
+
+void PositioningState::RotateLeft() noexcept 
+{
+    auto game = m_Game.lock();
+
+    game->m_Tetromino->RotateLeft();
+    game->m_TetrominoGhost->RotateLeft();
+}
+
 void PositioningState::Start(Direction direction) noexcept
 {
-    auto game = m_game.lock();
+    auto game = m_Game.lock();
     game->MoveSide(m_DirectionStep[direction]);
     m_SideValue = 0.0f;
     
@@ -296,7 +326,7 @@ void LineCompleatedState::GetColor(::MiniKit::Graphics::Color& color, float delt
 void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
     
-    auto game = m_game.lock();
+    auto game = m_Game.lock();
     
     if (!game) {
         return;

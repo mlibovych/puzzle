@@ -28,7 +28,7 @@ class StateMachine
 {   
     friend class Game;
 protected:
-    std::weak_ptr<Game> m_game;
+    std::weak_ptr<Game> m_Game;
 public:
     StateMachine(std::shared_ptr<Game> game);
     virtual ~StateMachine();
@@ -93,6 +93,8 @@ public:
     void Stop(Direction direction) noexcept;
 
     virtual void Enter() noexcept override;
+    void RotateRight() noexcept;
+    void RotateLeft() noexcept;
 };
 
 class LineCompleatedState : public GameState {

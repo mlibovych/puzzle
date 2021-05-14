@@ -261,7 +261,7 @@ void Game::MoveSide(int step) {
     catch (bool) {
         return;
     }
-    m_Tetromino->moveSide(step);
+    m_Tetromino->MoveSide(step);
 }
 
 void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -270,9 +270,12 @@ void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platfor
 
     switch (event.keycode)
     {
-        case  Keycode::KeyLeft:
-        case  Keycode::KeyRight:
-        case  Keycode::KeyDown:
+        case Keycode::KeyLeft:
+        case Keycode::KeyRight:
+        case Keycode::KeyDown:
+        case Keycode::KeyUp:
+        case Keycode::KeyZ:
+        case Keycode::KeySpace:
         {
             if (!m_KeyState[event.keycode])
             {
@@ -293,9 +296,12 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
 
     switch (event.keycode)
     {
-        case  Keycode::KeyLeft:
-        case  Keycode::KeyRight:
-        case  Keycode::KeyDown:
+        case Keycode::KeyLeft:
+        case Keycode::KeyRight:
+        case Keycode::KeyDown:
+        case Keycode::KeyUp:
+        case Keycode::KeyZ:
+        case Keycode::KeySpace:
         {
             if (m_KeyState[event.keycode])
             {
@@ -383,7 +389,8 @@ void GridManager::AddToField() noexcept
     for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
             if (game->m_Tetromino->m_Shape[y][x]) {
-                if (!game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
+                    !game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
                     if (game->m_Tetromino->m_Y + y == 0) {
                         exit(0);
                     }

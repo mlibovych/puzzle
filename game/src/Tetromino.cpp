@@ -26,12 +26,46 @@ Tetromino::~Tetromino()
 
 }
 
-void Tetromino::moveDown() noexcept
+void Tetromino::MoveDown() noexcept
 {
     m_Y++;
 }
 
-void Tetromino::moveSide(int step) noexcept
+void Tetromino::MoveSide(int step) noexcept
 {
     m_X += step;
+}
+
+void Tetromino::RotateRight() noexcept
+{
+    for (int y = 0; y < m_Shape.size() / 2; y++) {
+        for (int x = y; x < m_Shape.size() - y - 1; x++) {
+            int temp = m_Shape[y][x];
+
+            m_Shape[y][x] = m_Shape[m_Shape.size() - 1 - x][y];
+
+            m_Shape[m_Shape.size() - 1 - x][y] = m_Shape[m_Shape.size() - 1 - y][m_Shape.size() - 1 - x];
+
+            m_Shape[m_Shape.size() - 1 - y][m_Shape.size() - 1 - x] = m_Shape[x][m_Shape.size() - 1 - y];
+
+            m_Shape[x][m_Shape.size() - 1 - y] = temp;
+        }
+    }
+}
+
+void Tetromino::RotateLeft() noexcept
+{
+    for (int y = 0; y < m_Shape.size() / 2; y++) {
+        for (int x = y; x < m_Shape.size() - y - 1; x++) {
+            int temp = m_Shape[y][x];
+
+            m_Shape[y][x] = m_Shape[x][m_Shape.size() - 1 - y];
+
+            m_Shape[x][m_Shape.size() - 1 - y] = m_Shape[m_Shape.size() - 1 - y][m_Shape.size() - 1 - x];
+
+            m_Shape[m_Shape.size() - 1 - y][m_Shape.size() - 1 - x] = m_Shape[m_Shape.size() - 1 - x][y];
+
+            m_Shape[m_Shape.size() - 1 - x][y] = temp;
+        }
+    }
 }
