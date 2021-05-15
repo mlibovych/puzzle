@@ -4,7 +4,7 @@ SET(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
-SET(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra -Wpedantic")
+SET(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra -Wpedantic -g")
 
 set(TARGET puzzle)
 

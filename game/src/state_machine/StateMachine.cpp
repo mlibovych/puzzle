@@ -101,7 +101,6 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
-    
     GameState::Tick(context);
 }
 
@@ -169,30 +168,32 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
 
     //moving
     
+    if (game->m_Tetromino) {
     //down
-    m_DownValue += context.GetFrameDelta();
+        m_DownValue += context.GetFrameDelta();
 
-    if (m_DownValue > game->m_FallSpeed) {
-        m_DownValue = 0.0f;
-        if (!m_Lock) {
-            game->m_Tetromino->MoveDown();
+        if (m_DownValue > game->m_FallSpeed) {
+            m_DownValue = 0.0f;
+            if (!m_Lock) {
+                game->m_Tetromino->MoveDown();
+            }
         }
-    }
 
-    //side
-    m_SideValue += context.GetFrameDelta();
+        //side
+        m_SideValue += context.GetFrameDelta();
 
-    if (m_SideValue > game->m_SideSpeed) {
-        m_SideValue = 0.0f;
-        for (const auto& [key, value] : m_DirectionsQueue) {
-            if (value == 1) {
-                game->MoveSide(m_DirectionStep[key]);
-                break;
+        if (m_SideValue > game->m_SideSpeed) {
+            m_SideValue = 0.0f;
+            for (const auto& [key, value] : m_DirectionsQueue) {
+                if (value == 1) {
+                    game->MoveSide(m_DirectionStep[key]);
+                    break;
+                }
             }
         }
     }
-
     GameState::Tick(context);
+
 }
 
 void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -412,7 +413,6 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 
         std::cout << game->m_Score << " Level: " << game->m_Level << std::endl;
     }
-    // std::cout << 1 << std::endl;
     for (int line : game->m_GridManager->GetCompleatedLines()) {
         for (int x = 0; x < g_FieldWidth; x++) {
             if (game->m_Blocks[line][x]) {
@@ -421,7 +421,6 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
-    // std::cout << 2 << std::endl;
     
     GameState::Tick(context);
 }
@@ -429,7 +428,6 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 void LineCompleatedState::Enter() noexcept
 {   
     m_Value = 0.0f;
-    //recalculate speed
 }
 
 NewGameState::NewGameState(std::shared_ptr<Game> game) :

@@ -491,6 +491,8 @@ void ScoreManager::AddtoScore() noexcept
     game->m_ClearedLines += m_compleatedLines;
     if (game->m_ClearedLines > 4 + 4 * game->m_Level) {
         game->m_Level++;
+        game->m_FallSpeed *= 0.9f - 1 / (game->m_Level + 1);
+        std::cout << game->m_FallSpeed << std::endl;
     }
     m_compleatedLines = 0;
 }
