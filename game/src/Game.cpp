@@ -34,7 +34,9 @@
     auto& graphicsDevice = context.GetGraphicsDevice();
 
     m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
-    m_Images["field"] = graphicsDevice.CreateImage(g_BackPath);
+    m_Images["field"] = graphicsDevice.CreateImage(g_FieldPath);
+    m_Images["back"] = graphicsDevice.CreateImage(g_BackPath);
+
     //field background
     const auto& imageSize = m_Images["field"]->GetSize();
 
@@ -50,15 +52,22 @@
 
     for (int y = g_FieldHeight - 1; y >= 0; y--) {
         for (int x = 0; x < g_FieldWidth; x++) {
-            auto& cell = m_Background[y][x];
+            auto& cell = m_Field[y][x];
 
             cell.position.x = m_AnchorPositionX + imageScaleY * imageSize.width * x;
             cell.position.y = m_AnchorPositionY - imageScaleY * imageSize.width * y;
         }
     }
 
+    //next tetromino position
     m_NextTetrominoX = (drawableWidth - (m_BlockSkale.x * imageSize.width * g_FieldWidth + g_Padding * 2)) / 2 - m_BlockSkale.x * imageSize.width * 2;
 
+    //background
+    const auto& backSize = m_Images["back"]->GetSize();
+    const auto backImageScaleY = static_cast<float>(drawableHeight) / static_cast<float>(backSize.height);
+    const auto backImageScaleX = static_cast<float>(drawableWidth) / static_cast<float>(backSize.width);
+    m_BackgroundSkale = {backImageScaleX, backImageScaleY};
+    
     return {};
 }
 
@@ -121,11 +130,13 @@ void Game::UpdateSettings()
     }
 }
 
-void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+void Game::DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                           ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
     //draw field
-    for (const auto& row : m_Background) {
+    commandBuffer.SetImage(*m_Images["field"]);
+
+    for (const auto& row : m_Field) {
         for (const auto& col : row) {
             drawSurface.tint = col.color;
             drawSurface.position = col.position;
@@ -147,8 +158,8 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
             for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
                 if (m_TetrominoGhost->m_Shape[y][x] && m_TetrominoGhost->m_Y + static_cast<int> (y) >= 0) {
                     drawSurface.tint = {1.0f, 1.0f, 1.0f, 0.5f};
-                    drawSurface.position.x = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.x;
-                    drawSurface.position.y = m_Background[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.y;
+                    drawSurface.position.x = m_Field[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.x;
+                    drawSurface.position.y = m_Field[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.y;
                     drawSurface.scale = m_BlockSkale;
 
                     commandBuffer.Draw(drawSurface);
@@ -163,8 +174,8 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
             for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
                 if (m_Tetromino->m_Shape[y][x] && m_Tetromino->m_Y + static_cast<int> (y) >= 0) {
                     drawSurface.tint = m_Tetromino->m_Color;
-                    drawSurface.position.x = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
-                    drawSurface.position.y = m_Background[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
+                    drawSurface.position.x = m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
+                    drawSurface.position.y = m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
                     drawSurface.scale = m_BlockSkale;
 
                     commandBuffer.Draw(drawSurface);
@@ -193,11 +204,11 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     }
 
     // draw blocks
-    for (size_t y = 0; y < m_Field.size(); y++) {
-        for (size_t x = 0; x < m_Field[y].size(); x++) {
-            if (m_Field[y][x]) {
-                drawSurface.tint = m_Field[y][x]->color;
-                drawSurface.position = m_Background[y][x].position;
+    for (size_t y = 0; y < m_Blocks.size(); y++) {
+        for (size_t x = 0; x < m_Blocks[y].size(); x++) {
+            if (m_Blocks[y][x]) {
+                drawSurface.tint = m_Blocks[y][x]->color;
+                drawSurface.position = m_Field[y][x].position;
                 drawSurface.scale = m_BlockSkale;
 
                 commandBuffer.Draw(drawSurface);
@@ -217,16 +228,29 @@ void Game::GetGhostPosition()
     m_TetrominoGhost->m_X = m_Tetromino->m_X;
 }
 
-void Game::DrawField(::MiniKit::Engine::Context& context) noexcept
+void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
+    commandBuffer.SetImage(*m_Images["back"]);
+
+    drawSurface.tint = g_BackgroundColor;
+    drawSurface.position.x = 0;
+    drawSurface.position.y = 0;
+    drawSurface.scale = m_BackgroundSkale;
+
+    commandBuffer.Draw(drawSurface);
+}
+
+void Game::Draw(::MiniKit::Engine::Context& context) noexcept
 {
     //drawing
     auto& graphicsDevice = context.GetGraphicsDevice();
     auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
-    
     ::MiniKit::Graphics::DrawInfo drawSurface{};
-    commandBuffer.SetImage(*m_Images["field"]);
-    
+
     DrawBackground(context, drawSurface, commandBuffer);
+    
+    DrawField(context, drawSurface, commandBuffer);
 
     DrawBlocks(context, drawSurface, commandBuffer);
 
@@ -250,7 +274,7 @@ bool Game::CheckCollision(Tetromino* tetromino) {
             }
 
             if (tetromino->m_Shape[y][x] &&
-                (expectedY >= g_FieldHeight || m_Field[expectedY][expectedX])) {
+                (expectedY >= g_FieldHeight || m_Blocks[expectedY][expectedX])) {
                 return true;
             }
         }
@@ -267,7 +291,7 @@ bool Game::CheckSideCollision(int step) {
                 int expectedY = m_Tetromino->m_Y + static_cast<int> (y);
                 
                 if (expectedX < 0 || expectedX >= g_FieldWidth || expectedY >= g_FieldHeight ||
-                    (expectedY >= 0 && m_Field[expectedY][expectedX])) {
+                    (expectedY >= 0 && m_Blocks[expectedY][expectedX])) {
                     return true;
                 }
             }
@@ -348,7 +372,7 @@ void GridResolver::React(const GameEvent& event) noexcept
     for (int line : event.lines) {
         bool compleated = true;
 
-        for (auto& cell : game->m_Field[line]) {
+        for (auto& cell : game->m_Blocks[line]) {
             if (cell == nullptr) {
                 compleated = false;
             }
@@ -379,16 +403,16 @@ void GridManager::ClearLines() noexcept {
     auto game = m_game.lock();
 
     for (int line : m_compleatedLines) {
-        for (int x = 0; x < game->m_Field[line].size(); x++) {
-            game->m_Field[line][x] = nullptr;
+        for (int x = 0; x < game->m_Blocks[line].size(); x++) {
+            game->m_Blocks[line][x] = nullptr;
         }
     }
     for (int y = m_compleatedLines.back() - 1; y >= 0; y--) {
         for (int x = 0; x < g_FieldWidth; x++) {
-            if (game->m_Field[y][x]) {
-                game->m_Field[y + m_compleatedLines.size()][x] = std::make_unique<Block> ();
-                game->m_Field[y + m_compleatedLines.size()][x]->color = game->m_Field[y][x]->color;
-                game->m_Field[y][x] = nullptr;
+            if (game->m_Blocks[y][x]) {
+                game->m_Blocks[y + m_compleatedLines.size()][x] = std::make_unique<Block> ();
+                game->m_Blocks[y + m_compleatedLines.size()][x]->color = game->m_Blocks[y][x]->color;
+                game->m_Blocks[y][x] = nullptr;
             }
         }
     }
@@ -409,9 +433,9 @@ void GridManager::AddToField() noexcept
         for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
             if (game->m_Tetromino->m_Shape[y][x]) {
                 if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
-                    !game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
-                    game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
-                    game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
+                    !game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                    game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
+                    game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
                 }
             }
         }
@@ -439,7 +463,7 @@ void GridManager::ClearField() noexcept
         return;
     }
 
-    for (auto& row : game->m_Field) {
+    for (auto& row : game->m_Blocks) {
         for (auto& col : row) {
             col = nullptr;
         }

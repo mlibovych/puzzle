@@ -30,7 +30,7 @@ void GameState::Tick(::MiniKit::Engine::Context& context) noexcept
     if (game->m_EventSystem->HaveEvents()) {
         game->m_EventSystem->ProccedEvent();
     }
-    game->DrawField(context);
+    game->Draw(context);
 }
 
 void GameState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -93,7 +93,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
             for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
                 if (game->m_Tetromino->m_Shape[y][x]) {
                     if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
-                        game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                        game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
                         game->ChangeState(States::NEW_GAME);
                         break;
                     }
@@ -401,9 +401,9 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
     }
     for (int line : game->m_GridManager->GetCompleatedLines()) {
         for (int x = 0; x < g_FieldWidth; x++) {
-            if (game->m_Field[line][x]) {
-                GetColor(game->m_Field[line][x]->color, delta);
-                game->m_Field[line][x]->color.alpha = GetAlpha();
+            if (game->m_Blocks[line][x]) {
+                GetColor(game->m_Blocks[line][x]->color, delta);
+                game->m_Blocks[line][x]->color.alpha = GetAlpha();
             }
         }
     }

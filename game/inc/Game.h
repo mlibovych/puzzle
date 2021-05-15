@@ -28,9 +28,11 @@ constexpr float g_FallSpeed = 0.600f;
 
 constexpr float g_LineCompleatedAnimationTime = 0.5f;
 const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
+const ::MiniKit::Graphics::Color g_BackgroundColor { 1.0f, 0.55f, 0.25f, 1.0f };
 
 const std::string g_BlockPath = "assets/sq.png"; 
-const std::string g_BackPath = "assets/3.png";
+const std::string g_FieldPath = "assets/3.png";
+const std::string g_BackPath = "assets/pure.png";
 
 class StateMachine;
 class GameState;
@@ -127,8 +129,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
 
-    ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Field;
-    ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Background;
+    ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Blocks;
+    ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Field;
 
     ::std::vector<::std::unique_ptr<Tetromino>> m_Tetrominos;
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
@@ -137,6 +139,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     int m_TetrominosFrequency {1};
 
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
+    ::MiniKit::Graphics::float2 m_BackgroundSkale{ 1.0f, 1.0f };
 
     float m_FallSpeed { 0.600f };
     float m_SideSpeed { 0.100f };
@@ -148,8 +151,9 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
     
-    void DrawField(::MiniKit::Engine::Context& context) noexcept;
-    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void Draw(::MiniKit::Engine::Context& context) noexcept;
+    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void ChangeState(States state) noexcept;
     bool CheckCollision(Tetromino* tetromino);
