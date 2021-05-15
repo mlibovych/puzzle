@@ -75,7 +75,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 
         for (auto& tetromino : game->m_Tetrominos) {
             sumFrequency +=tetromino->m_SpawnFrequency;
-            if (sumFrequency > position) {
+            if (sumFrequency >= position) {
                 game->m_NextTetromino = ::std::make_unique<Tetromino> (*tetromino.get());
                 break;
             }
@@ -136,7 +136,6 @@ void PositioningState::Enter() noexcept
 
 void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
-    
     auto game = m_Game.lock();
     
     if (!game) {
@@ -385,7 +384,6 @@ void LineCompleatedState::GetColor(::MiniKit::Graphics::Color& color, float delt
 
 void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
-    
     auto game = m_Game.lock();
     
     if (!game) {
@@ -398,6 +396,8 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->m_ScoreManager->AddtoScore();
         game->m_GridManager->ClearLines();
         game->ChangeState(States::SPAWN);
+
+        std::cout << game->m_Score << " Level: " << game->m_Level << std::endl;
     }
     for (int line : game->m_GridManager->GetCompleatedLines()) {
         for (int x = 0; x < g_FieldWidth; x++) {
@@ -452,6 +452,7 @@ void NewGameState::Enter() noexcept
 
     m_Value = 0.0f;
 
+    //next tetromino
     std::mt19937 gen(m_Random());
     std::uniform_int_distribution<> dis(0, game->m_TetrominosFrequency - 1);
     int position = dis(gen);
@@ -459,12 +460,18 @@ void NewGameState::Enter() noexcept
 
     for (auto& tetromino : game->m_Tetrominos) {
         sumFrequency +=tetromino->m_SpawnFrequency;
-        if (sumFrequency > position) {
+        if (sumFrequency >= position) {
             game->m_NextTetromino = ::std::make_unique<Tetromino> (*tetromino.get());
             break;
         }
     }
 
+    //clear old game
     game->m_GridManager->ClearField();
+    game->m_ScoreManager->ClearScore();
     game->m_FallSpeed = g_FallSpeed;
+
+    if (game->m_Settings->IsOld()) {
+        game->UpdateSettings();
+    }
 }

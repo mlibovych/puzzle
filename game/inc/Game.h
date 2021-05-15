@@ -93,7 +93,8 @@ public:
     ScoreManager(std::shared_ptr<Game> game);
 
     virtual void React(const GameEvent& event) noexcept;
-    void AddtoScore();
+    void AddtoScore() noexcept;
+    void ClearScore() noexcept;
 };
 
 class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
@@ -110,7 +111,9 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class ScoreManager;
 
     int m_Score { 0 };
-    bool m_Ghost {true};
+    int m_ClearedLines { 0 };
+    int m_Level { 0 };
+    bool m_Ghost { true };
 
     ::std::unique_ptr<Settings> m_Settings;
 

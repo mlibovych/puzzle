@@ -222,3 +222,13 @@ void Settings::Update()
     }
     m_Time = newTime;
 }
+
+bool Settings::IsOld() noexcept
+{
+    std::filesystem::file_time_type newTime = std::filesystem::last_write_time(g_ConfigFilePath);
+
+    if (m_Time!= newTime) {
+       return true;
+    }
+    return false;
+}

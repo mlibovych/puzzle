@@ -112,4 +112,5 @@ public:
     }
 
     void Update();
+    bool IsOld() noexcept;
 };

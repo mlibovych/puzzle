@@ -73,7 +73,8 @@ void Game::Tick(::MiniKit::Engine::Context& context) noexcept
 }
 
 void Game::UpdateSettings()
-{
+{   
+    m_Tetrominos.clear();
     m_Settings->Update();
     
     decltype(auto) ghost = m_Settings->GetData().GetInt("ghoste");
@@ -420,7 +421,9 @@ void GridManager::AddToField() noexcept
 
     event.eventType = EventType::BLOCK_SET_EVENT;
     for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
-        event.lines.push_back(y + game->m_Tetromino->m_Y);
+        if (static_cast<int> (y) + game->m_Tetromino->m_Y >= 0 && static_cast<int> (y) + game->m_Tetromino->m_Y < g_FieldHeight) { 
+            event.lines.push_back(y + game->m_Tetromino->m_Y);
+        }
     }
     game->m_EventSystem->AddEvent(std::move(event));
 
@@ -453,10 +456,20 @@ void ScoreManager::React(const GameEvent& event) noexcept
     m_compleatedLines = event.lines.size();
 }
 
-void ScoreManager::AddtoScore()
+void ScoreManager::AddtoScore() noexcept
 {   
     auto game = m_game.lock();
 
     game->m_Score += m_compleatedLines;
+    m_compleatedLines = 0;
+}
+
+void ScoreManager::ClearScore() noexcept
+{   
+    auto game = m_game.lock();
+
+    game->m_Score = 0;
+    game->m_Level = 0;
+    game->m_ClearedLines = 0;
     m_compleatedLines = 0;
 }
