@@ -150,7 +150,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void ChangeState(States state) noexcept;
     bool CheckCollision(Tetromino* tetromino);
-    void CheckSideCollision(int step);
+    bool CheckSideCollision(int step);
     void MoveSide(int step);
     void GetGhostPosition();
 

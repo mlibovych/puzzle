@@ -241,7 +241,7 @@ void Game::ChangeState(States state) noexcept
 bool Game::CheckCollision(Tetromino* tetromino) {
     for (size_t y = 0; y < tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < tetromino->m_Shape[y].size(); x++) {
-            int expectedX = tetromino->m_X + x;
+            int expectedX = tetromino->m_X + static_cast<int> (x);
             int expectedY = tetromino->m_Y + static_cast<int> (y) + 1;
 
             if (expectedY < 0) {
@@ -258,29 +258,28 @@ bool Game::CheckCollision(Tetromino* tetromino) {
     return false;
 }
 
-void Game::CheckSideCollision(int step) {
+bool Game::CheckSideCollision(int step) {
     for (size_t y = 0; y < m_Tetromino->m_Shape.size(); y++) {
         for (size_t x = 0; x < m_Tetromino->m_Shape[y].size(); x++) {
             if (m_Tetromino->m_Shape[y][x]) {
-                int expectedX = m_Tetromino->m_X + x + step;
-                int expectedY = m_Tetromino->m_Y + y;
-                if (expectedX < 0 || expectedX >= g_FieldWidth ||
-                    (m_Tetromino->m_Y + static_cast<int> (y) >= 0 && m_Field[expectedY][expectedX])) {
-                    throw true;
+                int expectedX = m_Tetromino->m_X + static_cast<int> (x) + step;
+                int expectedY = m_Tetromino->m_Y + static_cast<int> (y);
+                
+                if (expectedX < 0 || expectedX >= g_FieldWidth || expectedY >= g_FieldHeight ||
+                    (expectedY >= 0 && m_Field[expectedY][expectedX])) {
+                    return true;
                 }
             }
         }
     }
+
+    return false;
 }
 
 void Game::MoveSide(int step) {
-    try {
-        CheckSideCollision(step);
+    if (!CheckSideCollision(step)) {
+        m_Tetromino->MoveSide(step);
     }
-    catch (bool) {
-        return;
-    }
-    m_Tetromino->MoveSide(step);
 }
 
 void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept

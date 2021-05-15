@@ -95,7 +95,7 @@ public:
     void RotateRight() noexcept;
     void RotateLeft() noexcept;
     void HardDrop() noexcept;
-    void SoftDrop(bool) noexcept;
+    void SoftDrop(bool drop) noexcept;
 };
 
 class LineCompleatedState : public GameState {

@@ -282,9 +282,23 @@ void PositioningState::HardDrop() noexcept
 void PositioningState::RotateRight() noexcept 
 {
     auto game = m_Game.lock();
-
+    
     game->m_Tetromino->RotateRight();
     game->m_TetrominoGhost->RotateRight();
+
+    if (game->CheckSideCollision(0)) {
+        if (!game->CheckSideCollision(m_DirectionStep[Direction::RIGHT])) {
+            game->MoveSide(m_DirectionStep[Direction::RIGHT]);
+        }
+        else {
+            game->m_Tetromino->m_Y--;
+            if (game->CheckSideCollision(0)) {
+                game->m_Tetromino->m_Y++;
+                game->m_Tetromino->RotateLeft();
+                game->m_TetrominoGhost->RotateLeft();
+            }
+        }
+    }
 }
 
 void PositioningState::RotateLeft() noexcept 
@@ -293,6 +307,20 @@ void PositioningState::RotateLeft() noexcept
 
     game->m_Tetromino->RotateLeft();
     game->m_TetrominoGhost->RotateLeft();
+
+    if (game->CheckSideCollision(0)) {
+        if (!game->CheckSideCollision(m_DirectionStep[Direction::LEFT])) {
+            game->MoveSide(m_DirectionStep[Direction::LEFT]);
+        }
+        else {
+            game->m_Tetromino->m_Y--;
+            if (game->CheckSideCollision(0)) {
+                game->m_Tetromino->m_Y++;
+                game->m_Tetromino->RotateRight();
+                game->m_TetrominoGhost->RotateRight();
+            }
+        }
+    }
 }
 
 void PositioningState::Start(Direction direction) noexcept
