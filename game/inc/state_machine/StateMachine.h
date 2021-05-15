@@ -98,6 +98,16 @@ public:
     void SoftDrop(bool drop) noexcept;
 };
 
+class PauseState : public GameState {
+public:
+    PauseState(std::shared_ptr<Game> game);
+    ~PauseState();
+
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    // virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+};
+
 class LineCompleatedState : public GameState {
     float m_Value { 0.0f };
 public:

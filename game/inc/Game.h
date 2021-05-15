@@ -34,13 +34,6 @@ const std::string g_BlockPath = "assets/sq.png";
 const std::string g_FieldPath = "assets/3.png";
 const std::string g_BackPath = "assets/pure.png";
 
-class StateMachine;
-class GameState;
-class SpawnState;
-class PositioningState;
-class LineCompleatedState;
-class NewGameState;
-
 struct alignas(16) Block
 {
     ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -85,7 +78,7 @@ public:
     void AddToField() noexcept;
     void ClearLines() noexcept;
     void ClearField() noexcept;
-    std::vector<int>& GetCompleatedLines() noexcept;
+    std::vector<int> GetCompleatedLines() noexcept;
 };
 
 class ScoreManager : public GameObject
@@ -107,6 +100,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class PositioningState;
     friend class LineCompleatedState;
     friend class NewGameState;
+    friend class PauseState;
 
     friend class GridResolver;
     friend class GridManager;

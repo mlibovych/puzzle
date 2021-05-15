@@ -22,6 +22,7 @@
     m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
     m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
     m_States[States::NEW_GAME] = std::make_unique<NewGameState> (shared_from_this());
+    m_States[States::PAUSE] = std::make_unique<PauseState> (shared_from_this());
 
     ChangeState(States::NEW_GAME);
 
@@ -318,6 +319,7 @@ void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platfor
         case Keycode::KeyDown:
         case Keycode::KeyUp:
         case Keycode::KeyZ:
+        case Keycode::KeyC:
         case Keycode::KeySpace:
         {
             if (!m_KeyState[event.keycode])
@@ -344,6 +346,7 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
         case Keycode::KeyDown:
         case Keycode::KeyUp:
         case Keycode::KeyZ:
+        case Keycode::KeyC:
         case Keycode::KeySpace:
         {
             if (m_KeyState[event.keycode])
@@ -419,7 +422,7 @@ void GridManager::ClearLines() noexcept {
     m_compleatedLines.clear();
 }
 
-std::vector<int>& GridManager::GetCompleatedLines() noexcept
+std::vector<int> GridManager::GetCompleatedLines() noexcept
 {
     return m_compleatedLines;
 }
@@ -484,7 +487,11 @@ void ScoreManager::AddtoScore() noexcept
 {   
     auto game = m_game.lock();
 
-    game->m_Score += m_compleatedLines;
+    game->m_Score += m_compleatedLines * 100 * (game->m_Level + 1);
+    game->m_ClearedLines += m_compleatedLines;
+    if (game->m_ClearedLines > 4 + 4 * game->m_Level) {
+        game->m_Level++;
+    }
     m_compleatedLines = 0;
 }
 

@@ -229,6 +229,13 @@ void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexc
             HardDrop();
             break;
         }
+        case Keycode::KeyC:
+        {
+            auto game = m_Game.lock();
+
+            game->ChangeState(States::PAUSE);
+            break;
+        }
         default:
             break;
     }
@@ -238,12 +245,12 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
 {
     switch (event.keycode)
     {
-        case  Keycode::KeyLeft:
+        case Keycode::KeyLeft:
         {
             Stop(Direction::LEFT);
             break;
         }
-        case  Keycode::KeyRight:
+        case Keycode::KeyRight:
         {   
             Stop(Direction::RIGHT);
             break;
@@ -289,6 +296,9 @@ void PositioningState::RotateRight() noexcept
         if (!game->CheckSideCollision(m_DirectionStep[Direction::RIGHT])) {
             game->MoveSide(m_DirectionStep[Direction::RIGHT]);
         }
+        else if (!game->CheckSideCollision(m_DirectionStep[Direction::LEFT])) {
+            game->MoveSide(m_DirectionStep[Direction::LEFT]);
+        }
         else {
             game->m_Tetromino->m_Y--;
             if (game->CheckSideCollision(0)) {
@@ -308,7 +318,10 @@ void PositioningState::RotateLeft() noexcept
     game->m_TetrominoGhost->RotateLeft();
 
     if (game->CheckSideCollision(0)) {
-        if (!game->CheckSideCollision(m_DirectionStep[Direction::LEFT])) {
+        if (!game->CheckSideCollision(m_DirectionStep[Direction::RIGHT])) {
+            game->MoveSide(m_DirectionStep[Direction::RIGHT]);
+        }
+        else if (!game->CheckSideCollision(m_DirectionStep[Direction::LEFT])) {
             game->MoveSide(m_DirectionStep[Direction::LEFT]);
         }
         else {
@@ -399,6 +412,7 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
 
         std::cout << game->m_Score << " Level: " << game->m_Level << std::endl;
     }
+    // std::cout << 1 << std::endl;
     for (int line : game->m_GridManager->GetCompleatedLines()) {
         for (int x = 0; x < g_FieldWidth; x++) {
             if (game->m_Blocks[line][x]) {
@@ -407,6 +421,7 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
+    // std::cout << 2 << std::endl;
     
     GameState::Tick(context);
 }
@@ -474,4 +489,36 @@ void NewGameState::Enter() noexcept
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
     }
+}
+
+PauseState::PauseState(std::shared_ptr<Game> game) :
+            GameState(game)
+{
+
+}
+
+PauseState::~PauseState()
+{
+
+}
+
+void PauseState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    switch (event.keycode)
+    {
+        case Keycode::KeyC:
+        {
+            auto game = m_Game.lock();
+    
+            game->ChangeState(States::POSITIONING);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void PauseState::Tick(::MiniKit::Engine::Context& context) noexcept
+{
+    GameState::Tick(context);
 }
