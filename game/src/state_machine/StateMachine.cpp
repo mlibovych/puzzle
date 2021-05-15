@@ -71,21 +71,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
         int sumFrequency = 0;
 
         game->m_EventSystem->ProccedEvent();
-
-        
-
-        if (game->m_NextTetromino) {
-            game->m_Tetromino = ::std::make_unique<Tetromino> (*game->m_NextTetromino);
-        }
-        else {
-            for (auto& tetromino : game->m_Tetrominos) {
-                sumFrequency +=tetromino->m_SpawnFrequency;
-                if (sumFrequency > position) {
-                    game->m_Tetromino = ::std::make_unique<Tetromino> (*tetromino.get());
-                    break;
-                }
-            }
-        }
+        game->m_Tetromino = ::std::make_unique<Tetromino> (*game->m_NextTetromino);
 
         for (auto& tetromino : game->m_Tetrominos) {
             sumFrequency +=tetromino->m_SpawnFrequency;
@@ -102,6 +88,18 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
 
         game->ChangeState(States::POSITIONING);
+
+        for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
+            for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
+                if (game->m_Tetromino->m_Shape[y][x]) {
+                    if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
+                        game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                        game->ChangeState(States::NEW_GAME);
+                        break;
+                    }
+                }
+            }
+        }
     }
     
     GameState::Tick(context);
@@ -175,9 +173,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
     //down
     m_DownValue += context.GetFrameDelta();
 
-    auto speed = m_SoftDrop ? game->m_SoftDropSpeed : game->m_FallSpeed;
-
-    if (m_DownValue > speed) {
+    if (m_DownValue > game->m_FallSpeed) {
         m_DownValue = 0.0f;
         if (!m_Lock) {
             game->m_Tetromino->MoveDown();
@@ -204,19 +200,19 @@ void PositioningState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexc
 {
     switch (event.keycode)
     {
-        case  Keycode::KeyLeft:
+        case Keycode::KeyLeft:
         {
             Start(Direction::LEFT);
             break;
         }
-        case  Keycode::KeyRight:
+        case Keycode::KeyRight:
         {   
             Start(Direction::RIGHT);
             break;
         }
         case Keycode::KeyDown:
-        {
-            m_SoftDrop = true;
+        {   
+            SoftDrop(true);
             break;
         }
         case Keycode::KeyUp:
@@ -255,12 +251,24 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
         }
         case Keycode::KeyDown:
         {
-            m_SoftDrop = false;
+            SoftDrop(false);
             break;
         }
         default:
             break;
     }
+}
+
+void PositioningState::SoftDrop(bool drop) noexcept
+{
+    auto game = m_Game.lock();
+    
+    if (drop) {
+        game->m_FallSpeed /= 6;
+    }
+    else {
+        game->m_FallSpeed *= 6;
+    }   
 }
 
 void PositioningState::HardDrop() noexcept
@@ -379,4 +387,56 @@ void LineCompleatedState::Enter() noexcept
 {   
     m_Value = 0.0f;
     //recalculate speed
+}
+
+NewGameState::NewGameState(std::shared_ptr<Game> game) :
+            GameState(game)
+{
+
+}
+
+NewGameState::~NewGameState()
+{
+    
+}
+
+void NewGameState::Tick(::MiniKit::Engine::Context& context) noexcept
+{   
+    
+    auto game = m_Game.lock();
+    
+    if (!game) {
+        return;
+    }
+    
+    game->ChangeState(States::SPAWN);
+    
+    GameState::Tick(context);
+}
+
+void NewGameState::Enter() noexcept
+{   
+    auto game = m_Game.lock();
+    
+    if (!game) {
+        return;
+    }
+
+    m_Value = 0.0f;
+
+    std::mt19937 gen(m_Random());
+    std::uniform_int_distribution<> dis(0, game->m_TetrominosFrequency - 1);
+    int position = dis(gen);
+    int sumFrequency = 0;
+
+    for (auto& tetromino : game->m_Tetrominos) {
+        sumFrequency +=tetromino->m_SpawnFrequency;
+        if (sumFrequency > position) {
+            game->m_NextTetromino = ::std::make_unique<Tetromino> (*tetromino.get());
+            break;
+        }
+    }
+
+    game->m_GridManager->ClearField();
+    game->m_FallSpeed = g_FallSpeed;
 }

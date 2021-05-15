@@ -77,7 +77,6 @@ class PositioningState : public GameState {
     float m_LockValue { 0.0f };
 
     bool m_Lock = false;
-    bool m_SoftDrop = false;
 
     std::unordered_map<Direction, int> m_DirectionsQueue;
     std::unordered_map<Direction, int> m_DirectionStep;
@@ -96,6 +95,7 @@ public:
     void RotateRight() noexcept;
     void RotateLeft() noexcept;
     void HardDrop() noexcept;
+    void SoftDrop(bool) noexcept;
 };
 
 class LineCompleatedState : public GameState {
@@ -108,5 +108,16 @@ public:
     virtual void Enter() noexcept override;
     void GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept;
     float GetAlpha() noexcept;
+};
+
+class NewGameState : public GameState {
+    float m_Value { 0.0f };
+    std::random_device m_Random;
+public:
+    NewGameState(std::shared_ptr<Game> game);
+    ~NewGameState();
+
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Enter() noexcept override;
 };
 

@@ -24,6 +24,8 @@ constexpr int g_Padding = 10;
 
 constexpr int g_NextTetrominoY = 180;
 
+constexpr float g_FallSpeed = 0.600f;
+
 constexpr float g_LineCompleatedAnimationTime = 0.5f;
 const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
 
@@ -35,6 +37,7 @@ class GameState;
 class SpawnState;
 class PositioningState;
 class LineCompleatedState;
+class NewGameState;
 
 struct alignas(16) Block
 {
@@ -79,6 +82,7 @@ public:
 
     void AddToField() noexcept;
     void ClearLines() noexcept;
+    void ClearField() noexcept;
     std::vector<int>& GetCompleatedLines() noexcept;
 };
 
@@ -99,6 +103,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     friend class SpawnState;
     friend class PositioningState;
     friend class LineCompleatedState;
+    friend class NewGameState;
 
     friend class GridResolver;
     friend class GridManager;
@@ -131,7 +136,6 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
 
     float m_FallSpeed { 0.600f };
-    float m_SoftDropSpeed { 0.100f };
     float m_SideSpeed { 0.100f };
     float m_LockDelay { 0.500f };
 

@@ -7,13 +7,6 @@
     m_Settings = std::make_unique<Settings> ();
     UpdateSettings();
 
-    //states
-    m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
-    m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
-    m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
-
-    ChangeState(States::SPAWN);
-
     //event system
     m_EventSystem = std::make_unique<EventSystem>();
     m_GridResolver = std::make_unique<GridResolver> (shared_from_this());
@@ -23,6 +16,14 @@
     m_EventSystem->Subscribe(EventType::BLOCK_SET_EVENT, m_GridResolver.get());
     m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_GridManager.get());
     m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_ScoreManager.get());
+
+    //states
+    m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
+    m_States[States::POSITIONING] = std::make_unique<PositioningState> (shared_from_this());
+    m_States[States::LINE_COMPLEATED] = std::make_unique<LineCompleatedState> (shared_from_this());
+    m_States[States::NEW_GAME] = std::make_unique<NewGameState> (shared_from_this());
+
+    ChangeState(States::NEW_GAME);
 
     //window
     auto& window = context.GetWindow();
@@ -34,13 +35,6 @@
 
     m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
     m_Images["field"] = graphicsDevice.CreateImage(g_BackPath);
-    
-    //field data
-    for (auto& row : m_Field) {
-        for (auto& col : row) {
-            col = nullptr;
-        }
-    }
     //field background
     const auto& imageSize = m_Images["field"]->GetSize();
 
@@ -416,9 +410,6 @@ void GridManager::AddToField() noexcept
             if (game->m_Tetromino->m_Shape[y][x]) {
                 if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
                     !game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
-                    if (game->m_Tetromino->m_Y + y == 0) {
-                        exit(0);
-                    }
                     game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x] = std::make_unique<Block>();
                     game->m_Field[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]->color = game->m_Tetromino->m_Color;
                 }
@@ -436,6 +427,21 @@ void GridManager::AddToField() noexcept
 
     game->m_Tetromino = nullptr;
     game->m_TetrominoGhost = nullptr;
+}
+
+void GridManager::ClearField() noexcept
+{   
+    auto game = m_game.lock();
+
+    if (!game) {
+        return;
+    }
+
+    for (auto& row : game->m_Field) {
+        for (auto& col : row) {
+            col = nullptr;
+        }
+    }
 }
 
 ScoreManager::ScoreManager(std::shared_ptr<Game> game) : GameObject(game)
