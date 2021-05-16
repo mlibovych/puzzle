@@ -37,6 +37,9 @@
     m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
     m_Images["field"] = graphicsDevice.CreateImage(g_FieldPath);
     m_Images["back"] = graphicsDevice.CreateImage(g_BackPath);
+    for (int i = 0; i < 10; i++) {
+        m_Images[std::to_string(i)] = graphicsDevice.CreateImage("assets/" + std::to_string(i) + ".png");
+    }
 
     //field background
     const auto& imageSize = m_Images["field"]->GetSize();
@@ -69,6 +72,8 @@
     const auto backImageScaleX = static_cast<float>(drawableWidth) / static_cast<float>(backSize.width);
     m_BackgroundSkale = {backImageScaleX, backImageScaleY};
     
+    //numbers
+   
     return {};
 }
 
@@ -242,6 +247,44 @@ void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphi
     commandBuffer.Draw(drawSurface);
 }
 
+void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept
+{
+     auto imageX = 0.5f * static_cast<float>(context.GetWindow().GetDrawableWidth() - g_Padding);
+    do {
+        auto digit = number % 10;
+
+        number /= 10;
+
+        const auto& imageSize = m_Images[std::to_string(digit)]->GetSize();
+        const auto imageScaleX = 50 / static_cast<float> (imageSize.width);
+        const auto imageScaleY = 100 / static_cast<float> (imageSize.height);
+
+        drawSurface.position.x = imageX - imageSize.width * imageScaleX;
+        drawSurface.tint = g_TextColor;
+        drawSurface.scale = {imageScaleX, imageScaleY};
+
+        commandBuffer.SetImage(*m_Images[std::to_string(digit)]);
+        commandBuffer.Draw(drawSurface);
+        
+        imageX -= imageSize.width * imageScaleX;
+    }
+    while (number);
+}
+
+void Game::DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
+    // auto imageX = m_AnchorPositionX + m_BlockSkale.x * m_Images["field"]->GetSize().width * g_FieldWidth + g_Padding;
+
+    drawSurface.position.y = m_ScoreNumberY;
+    DrawNumber(context, drawSurface, commandBuffer, m_Score);
+    drawSurface.position.y = m_LevelNumberY;
+    DrawNumber(context, drawSurface, commandBuffer, m_Level);
+    drawSurface.position.y = m_LinesNumberY;
+    DrawNumber(context, drawSurface, commandBuffer, m_ClearedLines);
+}
+
 void Game::Draw(::MiniKit::Engine::Context& context) noexcept
 {
     //drawing
@@ -254,6 +297,8 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
     DrawField(context, drawSurface, commandBuffer);
 
     DrawBlocks(context, drawSurface, commandBuffer);
+
+    DrawScore(context, drawSurface, commandBuffer);
 
     graphicsDevice.EndFrame(commandBuffer);
 }
@@ -487,12 +532,11 @@ void ScoreManager::AddtoScore() noexcept
 {   
     auto game = m_game.lock();
 
-    game->m_Score += m_compleatedLines * 100 * (game->m_Level + 1);
+    game->m_Score += 100 * m_compleatedLines + (10 * m_compleatedLines * game->m_Level);
     game->m_ClearedLines += m_compleatedLines;
     if (game->m_ClearedLines > 4 + 4 * game->m_Level) {
         game->m_Level++;
         game->m_FallSpeed *= 0.9f - 1 / (game->m_Level + 1);
-        std::cout << game->m_FallSpeed << std::endl;
     }
     m_compleatedLines = 0;
 }

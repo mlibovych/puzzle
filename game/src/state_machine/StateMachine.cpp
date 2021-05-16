@@ -410,8 +410,6 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         game->m_ScoreManager->AddtoScore();
         game->m_GridManager->ClearLines();
         game->ChangeState(States::SPAWN);
-
-        std::cout << game->m_Score << " Level: " << game->m_Level << std::endl;
     }
     for (int line : game->m_GridManager->GetCompleatedLines()) {
         for (int x = 0; x < g_FieldWidth; x++) {

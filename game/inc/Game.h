@@ -29,9 +29,10 @@ constexpr float g_FallSpeed = 0.600f;
 constexpr float g_LineCompleatedAnimationTime = 0.5f;
 const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
 const ::MiniKit::Graphics::Color g_BackgroundColor { 1.0f, 0.55f, 0.25f, 1.0f };
+const ::MiniKit::Graphics::Color g_TextColor { 0.4f, 0.1f, 0.1f, 1.0f };
 
 const std::string g_BlockPath = "assets/sq.png"; 
-const std::string g_FieldPath = "assets/3.png";
+const std::string g_FieldPath = "assets/back.png";
 const std::string g_BackPath = "assets/pure.png";
 
 struct alignas(16) Block
@@ -141,14 +142,21 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     float m_AnchorPositionY { 0.0f };
     float m_AnchorPositionX { 0.0f };
-    float m_NextTetrominoX { 0.0f };
 
-    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState = {};
+    float m_NextTetrominoX { 0.0f };
+    float m_ScoreNumberY { 300.0f };
+    float m_LevelNumberY { 100.0f };
+    float m_LinesNumberY { -100.0f };
+
+    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState {};
     
     void Draw(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept;
     void ChangeState(States state) noexcept;
     bool CheckCollision(Tetromino* tetromino);
     bool CheckSideCollision(int step);
