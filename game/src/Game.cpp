@@ -14,8 +14,8 @@
     m_ScoreManager = std::make_unique<ScoreManager> (shared_from_this());
 
     m_EventSystem->Subscribe(EventType::BLOCK_SET_EVENT, m_GridResolver.get());
-    m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_GridManager.get());
-    m_EventSystem->Subscribe(EventType::LINES_COMPLEATED_EVENT, m_ScoreManager.get());
+    m_EventSystem->Subscribe(EventType::LINES_COMPLETED_EVENT, m_GridManager.get());
+    m_EventSystem->Subscribe(EventType::LINES_COMPLETED_EVENT, m_ScoreManager.get());
 
     //states
     m_States[States::SPAWN] = std::make_unique<SpawnState> (shared_from_this());
@@ -37,8 +37,14 @@
     m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
     m_Images["field"] = graphicsDevice.CreateImage(g_FieldPath);
     m_Images["back"] = graphicsDevice.CreateImage(g_BackPath);
+    m_Images["border"] = graphicsDevice.CreateImage(g_BorderPath);
     for (int i = 0; i < 10; i++) {
         m_Images[std::to_string(i)] = graphicsDevice.CreateImage("assets/" + std::to_string(i) + ".png");
+    }
+    for (int i = 65; i <= 90; i++) {
+        std::string letter {static_cast<char> (i)};
+
+        m_Images[letter] = graphicsDevice.CreateImage("assets/" + letter + ".png");
     }
 
     //field background
@@ -49,7 +55,7 @@
     const auto imagesGridPixelsWidth = g_FieldWidth * g_BlockWidth;
     const auto imagesGridPixelsHeight = g_FieldHeight * imageSize.width;
     const auto imageScaleY = static_cast<float>(drawableHeight - g_Padding * 2) / static_cast<float>(imagesGridPixelsHeight);
-    m_BlockSkale = {imageScaleY, imageScaleY};
+    m_BlockScale = {imageScaleY, imageScaleY};
 
     m_AnchorPositionX =  -0.5f * drawableWidth + imageScaleY * imageSize.width / 2 + g_Padding;
     m_AnchorPositionY =  0.5f * drawableHeight - imageScaleY * imageSize.width / 2 - g_Padding;
@@ -64,13 +70,13 @@
     }
 
     //next tetromino position
-    m_NextTetrominoX = (drawableWidth - (m_BlockSkale.x * imageSize.width * g_FieldWidth + g_Padding * 2)) / 2 - m_BlockSkale.x * imageSize.width * 2;
+    m_NextTetrominoX = (drawableWidth - (m_BlockScale.x * imageSize.width * g_FieldWidth + g_Padding * 2)) / 2 - m_BlockScale.x * imageSize.width * 2;
 
     //background
     const auto& backSize = m_Images["back"]->GetSize();
     const auto backImageScaleY = static_cast<float>(drawableHeight) / static_cast<float>(backSize.height);
     const auto backImageScaleX = static_cast<float>(drawableWidth) / static_cast<float>(backSize.width);
-    m_BackgroundSkale = {backImageScaleX, backImageScaleY};
+    m_BackgroundScale = {backImageScaleX, backImageScaleY};
     
     //numbers
    
@@ -146,7 +152,7 @@ void Game::DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::D
         for (const auto& col : row) {
             drawSurface.tint = col.color;
             drawSurface.position = col.position;
-            drawSurface.scale = m_BlockSkale;
+            drawSurface.scale = m_BlockScale;
 
             commandBuffer.Draw(drawSurface);
         }
@@ -163,10 +169,11 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
         for (size_t y = 0; y < m_TetrominoGhost->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
                 if (m_TetrominoGhost->m_Shape[y][x] && m_TetrominoGhost->m_Y + static_cast<int> (y) >= 0) {
-                    drawSurface.tint = {1.0f, 1.0f, 1.0f, 0.5f};
+                    drawSurface.tint = m_Tetromino->m_Color;
+                    drawSurface.tint.alpha = 0.5;
                     drawSurface.position.x = m_Field[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.x;
                     drawSurface.position.y = m_Field[m_TetrominoGhost->m_Y + y][m_TetrominoGhost->m_X + x].position.y;
-                    drawSurface.scale = m_BlockSkale;
+                    drawSurface.scale = m_BlockScale;
 
                     commandBuffer.Draw(drawSurface);
                 }
@@ -182,7 +189,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
                     drawSurface.tint = m_Tetromino->m_Color;
                     drawSurface.position.x = m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.x;
                     drawSurface.position.y = m_Field[m_Tetromino->m_Y + y][m_Tetromino->m_X + x].position.y;
-                    drawSurface.scale = m_BlockSkale;
+                    drawSurface.scale = m_BlockScale;
 
                     commandBuffer.Draw(drawSurface);
                 }
@@ -199,9 +206,9 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
             for (size_t x = 0; x < m_NextTetromino->m_Shape[y].size(); x++) {
                 if (m_NextTetromino->m_Shape[y][x]) {
                     drawSurface.tint = m_NextTetromino->m_Color;
-                    drawSurface.position.x = m_AnchorPositionX + m_BlockSkale.x * imageSize.width * (g_FieldWidth + x + displace) + m_NextTetrominoX;
-                    drawSurface.position.y = m_AnchorPositionY - m_BlockSkale.y * imageSize.height * y - g_NextTetrominoY;
-                    drawSurface.scale = m_BlockSkale;
+                    drawSurface.position.x = m_AnchorPositionX + m_BlockScale.x * imageSize.width * (g_FieldWidth + x + displace) + m_NextTetrominoX;
+                    drawSurface.position.y = m_AnchorPositionY - m_BlockScale.y * imageSize.height * y - g_Padding - 200;
+                    drawSurface.scale = m_BlockScale;
 
                     commandBuffer.Draw(drawSurface);
                 }
@@ -215,7 +222,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
             if (m_Blocks[y][x]) {
                 drawSurface.tint = m_Blocks[y][x]->color;
                 drawSurface.position = m_Field[y][x].position;
-                drawSurface.scale = m_BlockSkale;
+                drawSurface.scale = m_BlockScale;
 
                 commandBuffer.Draw(drawSurface);
             }
@@ -242,7 +249,7 @@ void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphi
     drawSurface.tint = g_BackgroundColor;
     drawSurface.position.x = 0;
     drawSurface.position.y = 0;
-    drawSurface.scale = m_BackgroundSkale;
+    drawSurface.scale = m_BackgroundScale;
 
     commandBuffer.Draw(drawSurface);
 }
@@ -261,7 +268,7 @@ void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
         const auto imageScaleY = 100 / static_cast<float> (imageSize.height);
 
         drawSurface.position.x = imageX - imageSize.width * imageScaleX;
-        drawSurface.tint = g_TextColor;
+        drawSurface.tint = g_OrangeColor;
         drawSurface.scale = {imageScaleX, imageScaleY};
 
         commandBuffer.SetImage(*m_Images[std::to_string(digit)]);
@@ -274,15 +281,69 @@ void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
 
 void Game::DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
-{
-    // auto imageX = m_AnchorPositionX + m_BlockSkale.x * m_Images["field"]->GetSize().width * g_FieldWidth + g_Padding;
-
+{   
     drawSurface.position.y = m_ScoreNumberY;
     DrawNumber(context, drawSurface, commandBuffer, m_Score);
     drawSurface.position.y = m_LevelNumberY;
     DrawNumber(context, drawSurface, commandBuffer, m_Level);
     drawSurface.position.y = m_LinesNumberY;
     DrawNumber(context, drawSurface, commandBuffer, m_ClearedLines);
+}
+
+void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                      ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{   
+    auto height = 60.0f + 20.f;
+    auto width = 50.0f * 6 + 20.0f;
+
+    //top and half from square size
+    auto startY = 0.5f * context.GetWindow().GetDrawableHeight() - g_Padding - 0.5f * height;
+    //get center position from free space
+    auto startX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2 - (4 * 40.0f + g_Padding + width) / 2;
+    for (const char c : "ucode\0") {
+        if (!isalpha(c)) {
+            continue;
+        }
+        char C = std::toupper(c);
+        auto image = m_Images[std::string {C}];
+
+        drawSurface.position.y = startY;
+        drawSurface.position.x = startX;
+        drawSurface.tint = { 1.0f, 1.0f, 1.0f, 1.0f};
+        drawSurface.scale = {40.0f / image->GetSize().width, 50.0f / image->GetSize().height};
+
+        commandBuffer.SetImage(*image.get());
+        commandBuffer.Draw(drawSurface);
+
+        startX += 40.0f;
+    }
+    
+    drawSurface.position.y = startY;
+    drawSurface.position.x = startX - 0.5f * 50.0f + g_Padding + 0.5f * width;
+    drawSurface.tint = g_OrangeColor;
+    drawSurface.scale = {width / m_Images["border"]->GetSize().width, height / m_Images["border"]->GetSize().height};
+
+    commandBuffer.SetImage(*m_Images["border"]);
+    commandBuffer.Draw(drawSurface);
+
+    startX += g_Padding + 10;
+    for (const char c : "puzzle\0") {
+        if (!isalpha(c)) {
+            continue;
+        }
+        char C = std::toupper(c);
+        auto image = m_Images[std::string {C}];
+
+        drawSurface.position.y = startY;
+        drawSurface.position.x = startX;
+        drawSurface.tint = { 0.1f, 0.1f, 0.1f, 1.0f};
+        drawSurface.scale = {50.0f / image->GetSize().width, 60.0f / image->GetSize().height};
+
+        commandBuffer.SetImage(*image.get());
+        commandBuffer.Draw(drawSurface);
+
+        startX += 50.0f;
+    }
 }
 
 void Game::Draw(::MiniKit::Engine::Context& context) noexcept
@@ -293,6 +354,8 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
     ::MiniKit::Graphics::DrawInfo drawSurface{};
 
     DrawBackground(context, drawSurface, commandBuffer);
+
+    DrawLogo(context, drawSurface, commandBuffer);
     
     DrawField(context, drawSurface, commandBuffer);
 
@@ -431,7 +494,7 @@ void GridResolver::React(const GameEvent& event) noexcept
     }
     if (!compleatedLines.empty()) {
         GameEvent new_event;
-        new_event.eventType = EventType::LINES_COMPLEATED_EVENT;
+        new_event.eventType = EventType::LINES_COMPLETED_EVENT;
         new_event.lines = compleatedLines;
         game->m_EventSystem->AddEvent(std::move(new_event));
     }
@@ -451,7 +514,7 @@ void GridManager::ClearLines() noexcept {
     auto game = m_game.lock();
 
     for (int line : m_compleatedLines) {
-        for (int x = 0; x < game->m_Blocks[line].size(); x++) {
+        for (size_t x = 0; x < game->m_Blocks[line].size(); x++) {
             game->m_Blocks[line][x] = nullptr;
         }
     }

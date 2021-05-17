@@ -60,7 +60,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
 
     //events
     if (game->m_EventSystem->HaveEvents() &&
-        game->m_EventSystem->GetNextEventType() == EventType::LINES_COMPLEATED_EVENT) {
+        game->m_EventSystem->GetNextEventType() == EventType::LINES_COMPLETED_EVENT) {
         game->ChangeState(States::LINE_COMPLEATED);
     }
     else {

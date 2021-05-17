@@ -46,7 +46,7 @@ public:
     GameState(std::shared_ptr<Game> game);
     ~GameState();
 
-    void Tick(::MiniKit::Engine::Context& context) noexcept;
+    void Tick(::MiniKit::Engine::Context& context) noexcept override;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void Enter() noexcept override
@@ -131,3 +131,13 @@ public:
     virtual void Enter() noexcept override;
 };
 
+// class GameOverState : public GameState {
+//     float m_Value { 0.0f };
+//     std::random_device m_Random;
+// public:
+//     GameOverState(std::shared_ptr<Game> game);
+//     ~GameOverState();
+
+//     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+//     virtual void Enter() noexcept override;
+// };

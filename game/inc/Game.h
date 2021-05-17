@@ -22,18 +22,21 @@ constexpr int g_AppWidth = 800;
 constexpr int g_AppHeight = 900;
 constexpr int g_Padding = 10;
 
-constexpr int g_NextTetrominoY = 180;
+constexpr int g_NextTetrominoY = 250;
 
 constexpr float g_FallSpeed = 0.600f;
 
 constexpr float g_LineCompleatedAnimationTime = 0.5f;
 const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
-const ::MiniKit::Graphics::Color g_BackgroundColor { 1.0f, 0.55f, 0.25f, 1.0f };
+const ::MiniKit::Graphics::Color g_OrangeColor { 1.0f, 0.38f, 0.05f, 1.0f };
+const ::MiniKit::Graphics::Color g_BackgroundColor { 0.1f, 0.1f, 0.1f, 1.0f };
 const ::MiniKit::Graphics::Color g_TextColor { 0.4f, 0.1f, 0.1f, 1.0f };
+const ::MiniKit::Graphics::Color g_GhostColor { 1.0f, 0.55f, 0.22f, 0.5f };
 
 const std::string g_BlockPath = "assets/sq.png"; 
 const std::string g_FieldPath = "assets/back.png";
 const std::string g_BackPath = "assets/pure.png";
+const std::string g_BorderPath = "assets/border.png";
 
 struct alignas(16) Block
 {
@@ -133,8 +136,8 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     ::std::unique_ptr<Tetromino> m_NextTetromino { nullptr };
     int m_TetrominosFrequency {1};
 
-    ::MiniKit::Graphics::float2 m_BlockSkale{ 1.0f, 1.0f };
-    ::MiniKit::Graphics::float2 m_BackgroundSkale{ 1.0f, 1.0f };
+    ::MiniKit::Graphics::float2 m_BlockScale{ 1.0f, 1.0f };
+    ::MiniKit::Graphics::float2 m_BackgroundScale{ 1.0f, 1.0f };
 
     float m_FallSpeed { 0.600f };
     float m_SideSpeed { 0.100f };
@@ -157,6 +160,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     void DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept;
+    void DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void ChangeState(States state) noexcept;
     bool CheckCollision(Tetromino* tetromino);
     bool CheckSideCollision(int step);

@@ -7,7 +7,7 @@
 enum class EventType
 {
     BLOCK_SET_EVENT,
-    LINES_COMPLEATED_EVENT,
+    LINES_COMPLETED_EVENT,
     NONE
 };
 
