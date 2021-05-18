@@ -176,6 +176,9 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
             m_DownValue = 0.0f;
             if (!m_Lock) {
                 game->m_Tetromino->MoveDown();
+                if (m_SoftDrop) {
+                    game->m_ScoreManager->AddtoScore(1);
+                }
             }
         }
 
@@ -269,7 +272,8 @@ void PositioningState::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcep
 void PositioningState::SoftDrop(bool drop) noexcept
 {
     auto game = m_Game.lock();
-    
+    m_SoftDrop = drop;
+
     if (drop) {
         game->m_FallSpeed /= 6;
     }
@@ -283,6 +287,7 @@ void PositioningState::HardDrop() noexcept
     auto game = m_Game.lock();
 
     m_LockValue = game->m_LockDelay;
+    game->m_ScoreManager->AddtoScore(g_FieldHeight - game->m_Tetromino->m_Y);
     game->m_Tetromino->m_Y = game->m_TetrominoGhost->m_Y;
 }
 
@@ -481,6 +486,7 @@ void NewGameState::Enter() noexcept
     game->m_GridManager->ClearField();
     game->m_ScoreManager->ClearScore();
     game->m_FallSpeed = g_FallSpeed;
+    // game->m_Pause = false;
 
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
@@ -490,7 +496,7 @@ void NewGameState::Enter() noexcept
 PauseState::PauseState(std::shared_ptr<Game> game) :
             GameState(game)
 {
-
+    
 }
 
 PauseState::~PauseState()
@@ -516,5 +522,22 @@ void PauseState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
 
 void PauseState::Tick(::MiniKit::Engine::Context& context) noexcept
 {
-    GameState::Tick(context);
+   auto game = m_Game.lock();
+
+    // game->m_Menu->Draw(context);
+}
+
+void PauseState::Enter() noexcept
+{
+    auto game = m_Game.lock();
+
+    // game->m_Pause = true;
+}
+
+void PauseState::Exit() noexcept
+{
+    auto game = m_Game.lock();
+
+    game->UpdateSettings();
+    // game->m_Pause = false;
 }

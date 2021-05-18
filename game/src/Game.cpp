@@ -1,8 +1,15 @@
 #include <Game.h>
 #include <imgui.h>
 
-::std::error_code Game::Start(::MiniKit::Engine::Context& context) noexcept
+Game::Game(::std::shared_ptr<App> parentApp) : AppElement(parentApp)
+{
+
+}
+
+void Game::Init()
 {   
+    auto app = m_App.lock();
+            
     //settings
     m_Settings = std::make_unique<Settings> ();
     UpdateSettings();
@@ -12,6 +19,8 @@
     m_GridResolver = std::make_unique<GridResolver> (shared_from_this());
     m_GridManager = std::make_unique<GridManager> (shared_from_this());
     m_ScoreManager = std::make_unique<ScoreManager> (shared_from_this());
+
+    
 
     m_EventSystem->Subscribe(EventType::BLOCK_SET_EVENT, m_GridResolver.get());
     m_EventSystem->Subscribe(EventType::LINES_COMPLETED_EVENT, m_GridManager.get());
@@ -25,34 +34,11 @@
     m_States[States::PAUSE] = std::make_unique<PauseState> (shared_from_this());
 
     ChangeState(States::NEW_GAME);
-
-    //window
-    auto& window = context.GetWindow();
-    window.AddResponder(*this);
-
-    //playing elements
-    //images
-    auto& graphicsDevice = context.GetGraphicsDevice();
-
-    m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
-    m_Images["field"] = graphicsDevice.CreateImage(g_FieldPath);
-    m_Images["back"] = graphicsDevice.CreateImage(g_BackPath);
-    m_Images["border"] = graphicsDevice.CreateImage(g_BorderPath);
-    for (int i = 0; i < 10; i++) {
-        m_Images[std::to_string(i)] = graphicsDevice.CreateImage("assets/" + std::to_string(i) + ".png");
-    }
-    for (int i = 65; i <= 90; i++) {
-        std::string letter {static_cast<char> (i)};
-
-        m_Images[letter] = graphicsDevice.CreateImage("assets/" + letter + ".png");
-    }
-    m_Images[" "] = graphicsDevice.CreateImage(g_BlankPath);
-
     //field background
-    const auto& imageSize = m_Images["field"]->GetSize();
+    const auto& imageSize = app->m_Images["field"]->GetSize();
 
-    const auto drawableWidth = static_cast<float>(context.GetWindow().GetDrawableWidth());
-    const auto drawableHeight = static_cast<float>(context.GetWindow().GetDrawableHeight());
+    const auto drawableWidth = static_cast<float>(1600);
+    const auto drawableHeight = static_cast<float>(1800);
     const auto imagesGridPixelsWidth = g_FieldWidth * g_BlockWidth;
     const auto imagesGridPixelsHeight = g_FieldHeight * imageSize.width;
     const auto imageScaleY = static_cast<float>(drawableHeight - g_Padding * 2) / static_cast<float>(imagesGridPixelsHeight);
@@ -71,17 +57,11 @@
     }
 
     //next tetromino position
-    m_NextTetrominoX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2 - (3 * g_BlockWidth) / 2;
-
-    //background
-    const auto& backSize = m_Images["back"]->GetSize();
-    const auto backImageScaleY = static_cast<float>(drawableHeight) / static_cast<float>(backSize.height);
-    const auto backImageScaleX = static_cast<float>(drawableWidth) / static_cast<float>(backSize.width);
-    m_BackgroundScale = {backImageScaleX, backImageScaleY};
+    m_NextTetrominoX = ((0.5f * drawableWidth - g_Padding) + (-0.5f * drawableWidth + m_BlockScale.x * app->m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2 - (3 * g_BlockWidth) / 2;
     
     //numbers
     auto logoHeight = 60.0f + 20.f;
-    m_LogoY = 0.5f * context.GetWindow().GetDrawableHeight() - g_Padding - 0.5f * logoHeight;
+    m_LogoY = 0.5f * 1800 - g_Padding - 0.5f * logoHeight;
     m_NextTetrominoTitleY = m_LogoY - (g_Padding * 3 + 0.5f * logoHeight + 0.5f * 60);
     m_NextTetrominoY = m_NextTetrominoTitleY - (3 * g_BlockWidth) / 2;
 
@@ -91,12 +71,6 @@
     m_LevelNumberY = m_LevelTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
     m_LinesTitleY = m_LevelNumberY - 0.5f * 60 * 2 - 3 * g_Padding;
     m_LinesNumberY = m_LinesTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
-    return {};
-}
-
-::std::error_code Game::Shutdown(::MiniKit::Engine::Context& context) noexcept
-{
-    return {};
 }
 
 void Game::Tick(::MiniKit::Engine::Context& context) noexcept
@@ -106,9 +80,16 @@ void Game::Tick(::MiniKit::Engine::Context& context) noexcept
 
 void Game::UpdateSettings()
 {   
-    m_Tetrominos.clear();
-    m_Settings->Update();
+    try {
+        m_Settings->Update();
+    }
+    catch (std::exception& ex) {
+        std::cerr << "config file is incorrect" << std::endl;
+        return;
+    }
     
+    m_Tetrominos.clear();
+
     decltype(auto) ghost = m_Settings->GetData().GetInt("ghoste");
     m_Ghost = ghost;
 
@@ -156,8 +137,9 @@ void Game::UpdateSettings()
 void Game::DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                           ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
-    //draw field
-    commandBuffer.SetImage(*m_Images["field"]);
+    auto app = m_App.lock();
+
+    commandBuffer.SetImage(*app->m_Images["field"]);
 
     for (const auto& row : m_Field) {
         for (const auto& col : row) {
@@ -172,8 +154,10 @@ void Game::DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::D
 
 void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
-{
-    commandBuffer.SetImage(*m_Images["block"]);
+{   
+    auto app = m_App.lock();
+
+    commandBuffer.SetImage(*app->m_Images["block"]);
 
     //ghost
     if (m_Ghost && m_TetrominoGhost) {
@@ -209,7 +193,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     }
 
     //next
-    const auto& imageSize = m_Images["field"]->GetSize();
+    const auto& imageSize = app->m_Images["block"]->GetSize();
     auto displace = m_NextTetromino->m_Shape.size() == 2 ? 1 : 0;
 
     if (m_NextTetromino) {
@@ -252,7 +236,7 @@ void Game::GetGhostPosition()
     m_TetrominoGhost->m_X = m_Tetromino->m_X;
 }
 
-void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+void App::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
     commandBuffer.SetImage(*m_Images["back"]);
@@ -267,14 +251,15 @@ void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphi
 
 void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept
-{
+{   auto app = m_App.lock();
     auto imageX = 0.5f * static_cast<float>(context.GetWindow().GetDrawableWidth() - g_Padding);
+    
     do {
         auto digit = number % 10;
 
         number /= 10;
 
-        const auto& imageSize = m_Images[std::to_string(digit)]->GetSize();
+        const auto& imageSize = app->m_Images[std::to_string(digit)]->GetSize();
         const auto imageScaleX = 50 / static_cast<float> (imageSize.width);
         const auto imageScaleY = 60 / static_cast<float> (imageSize.height);
 
@@ -282,7 +267,7 @@ void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
         drawSurface.tint = g_OrangeColor;
         drawSurface.scale = {imageScaleX, imageScaleY};
 
-        commandBuffer.SetImage(*m_Images[std::to_string(digit)]);
+        commandBuffer.SetImage(*app->m_Images[std::to_string(digit)]);
         commandBuffer.Draw(drawSurface);
         
         imageX -= imageSize.width * imageScaleX;
@@ -305,12 +290,14 @@ void Game::DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
                     ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
                     const std::string text, float& x, float& y, float width, float height) noexcept
 {
+    auto app = m_App.lock();
+
     for (const char c : text) {
         if (!isalpha(c)) {
             continue;
         }
         char C = std::toupper(c);
-        auto image = m_Images[std::string {C}];
+        auto image = app->m_Images[std::string {C}];
 
         drawSurface.position.y = y;
         drawSurface.position.x = x;
@@ -327,11 +314,13 @@ void Game::DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
 void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
+    auto app = m_App.lock();
+
     auto logoHeight = 60.0f + 20.f;
     auto logoWidth = 50.0f * 6 + 20.0f;
 
     //get center position from free space
-    auto sideBarCenterX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2;
+    auto sideBarCenterX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * app->m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2;
     auto startX = sideBarCenterX - (4 * 40.0f + g_Padding + logoWidth) / 2;
     
     DrawText(context, drawSurface, commandBuffer, g_WhiteColor,
@@ -341,9 +330,9 @@ void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
     drawSurface.position.y = m_LogoY;
     drawSurface.position.x = startX - 0.5f * 50.0f + g_Padding + 0.5f * logoWidth;
     drawSurface.tint = g_OrangeColor;
-    drawSurface.scale = {logoWidth / m_Images["border"]->GetSize().width, logoHeight / m_Images["border"]->GetSize().height};
+    drawSurface.scale = {logoWidth / app->m_Images["border"]->GetSize().width, logoHeight / app->m_Images["border"]->GetSize().height};
 
-    commandBuffer.SetImage(*m_Images["border"]);
+    commandBuffer.SetImage(*app->m_Images["border"]);
     commandBuffer.Draw(drawSurface);
     //
     startX += g_Padding + 10;
@@ -375,7 +364,7 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
     auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
     ::MiniKit::Graphics::DrawInfo drawSurface{};
 
-    DrawBackground(context, drawSurface, commandBuffer);
+    m_App.lock()->DrawBackground(context, drawSurface, commandBuffer);
 
     DrawLogo(context, drawSurface, commandBuffer);
     
@@ -398,9 +387,12 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
 }
 
 void Game::ChangeState(States state) noexcept
-{
+{   
+    if (m_State != States::COUNT) {
+        m_States[m_State]->Exit();
+    }
     m_State = state;
-    m_States[state]->Enter();
+    m_States[m_State]->Enter();
 }
 
 bool Game::CheckCollision(Tetromino* tetromino) {
@@ -447,7 +439,7 @@ void Game::MoveSide(int step) {
     }
 }
 
-void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+void Game::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
     using ::MiniKit::Platform::Keycode;
 
@@ -461,20 +453,15 @@ void Game::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platfor
         case Keycode::KeyC:
         case Keycode::KeySpace:
         {
-            if (!m_KeyState[event.keycode])
-            {
-                m_KeyState[event.keycode] = true;
-                m_States[m_State]->KeyDown(event);
-            }
+            m_States[m_State]->KeyDown(event);
             break;
         }
         default:
             break;
     }
- 
 }
 
-void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+void Game::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
     using ::MiniKit::Platform::Keycode;
 
@@ -488,17 +475,12 @@ void Game::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform:
         case Keycode::KeyC:
         case Keycode::KeySpace:
         {
-            if (m_KeyState[event.keycode])
-            {
-                m_KeyState[event.keycode] = false;
-                m_States[m_State]->KeyUp(event);
-            }
+            m_States[m_State]->KeyUp(event);
             break;
         }
         default:
             break;
     }
-
 }
 
 GridResolver::GridResolver(std::shared_ptr<Game> game) : GameObject(game)
@@ -635,6 +617,13 @@ void ScoreManager::AddtoScore() noexcept
     m_compleatedLines = 0;
 }
 
+void ScoreManager::AddtoScore(int amount) noexcept
+{
+    auto game = m_game.lock();
+
+    game->m_Score += amount;
+}
+
 void ScoreManager::ClearScore() noexcept
 {   
     auto game = m_game.lock();
@@ -643,4 +632,105 @@ void ScoreManager::ClearScore() noexcept
     game->m_Level = 0;
     game->m_ClearedLines = 0;
     m_compleatedLines = 0;
+}
+
+::std::error_code App::Start(::MiniKit::Engine::Context& context) noexcept
+{   
+    //window
+    auto& window = context.GetWindow();
+    window.AddResponder(*this);
+
+    //images
+    auto& graphicsDevice = context.GetGraphicsDevice();
+
+    m_Images["block"] = graphicsDevice.CreateImage(g_BlockPath);
+    m_Images["field"] = graphicsDevice.CreateImage(g_FieldPath);
+    m_Images["back"] = graphicsDevice.CreateImage(g_BackPath);
+    m_Images["border"] = graphicsDevice.CreateImage(g_BorderPath);
+    for (int i = 0; i < 10; i++) {
+        m_Images[std::to_string(i)] = graphicsDevice.CreateImage("assets/" + std::to_string(i) + ".png");
+    }
+    for (int i = 65; i <= 90; i++) {
+        std::string letter {static_cast<char> (i)};
+
+        m_Images[letter] = graphicsDevice.CreateImage("assets/" + letter + ".png");
+    }
+    m_Images[" "] = graphicsDevice.CreateImage(g_BlankPath);
+
+    //background
+    const auto drawableWidth = static_cast<float>(window.GetDrawableWidth());
+    const auto drawableHeight = static_cast<float>(window.GetDrawableHeight());
+
+    const auto& backSize = m_Images["back"]->GetSize();
+    const auto backImageScaleY = drawableHeight / static_cast<float>(backSize.height);
+    const auto backImageScaleX = drawableWidth / static_cast<float>(backSize.width);
+    m_BackgroundScale = {backImageScaleX, backImageScaleY};
+
+    //elements
+    m_Elements[Element::GAME] = std::make_shared<Game> (shared_from_this());
+    m_Elements[Element::GAME]->Init();
+    m_Element = Element::GAME;
+    return {};
+}
+
+::std::error_code App::Shutdown(::MiniKit::Engine::Context& context) noexcept
+{
+    return {};
+}
+
+void App::Tick(::MiniKit::Engine::Context& context) noexcept
+{   
+    m_Elements[m_Element]->Tick(context);
+}
+
+void App::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    using ::MiniKit::Platform::Keycode;
+
+    switch (event.keycode)
+    {
+        case Keycode::KeyLeft:
+        case Keycode::KeyRight:
+        case Keycode::KeyDown:
+        case Keycode::KeyUp:
+        case Keycode::KeyZ:
+        case Keycode::KeyC:
+        case Keycode::KeySpace:
+        {
+            if (!m_KeyState[event.keycode])
+            {
+                m_KeyState[event.keycode] = true;
+                m_Elements[m_Element]->KeyDown(event);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void App::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    using ::MiniKit::Platform::Keycode;
+
+    switch (event.keycode)
+    {
+        case Keycode::KeyLeft:
+        case Keycode::KeyRight:
+        case Keycode::KeyDown:
+        case Keycode::KeyUp:
+        case Keycode::KeyZ:
+        case Keycode::KeyC:
+        case Keycode::KeySpace:
+        {
+            if (m_KeyState[event.keycode])
+            {
+                m_KeyState[event.keycode] = false;
+                m_Elements[m_Element]->KeyUp(event);
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }

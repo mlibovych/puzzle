@@ -21,7 +21,7 @@ enum class States
     LINE_COMPLEATED,
     PAUSE,
     GAME_OVER,
-    COUT
+    COUNT
 };
 
 class StateMachine
@@ -37,6 +37,7 @@ public:
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
     virtual void Enter() noexcept = 0;
+    virtual void Exit() noexcept = 0;
 };
 
 class GameState : public StateMachine
@@ -50,6 +51,10 @@ public:
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void Enter() noexcept override
+    {
+
+    }
+    virtual void Exit() noexcept override
     {
 
     }
@@ -77,6 +82,7 @@ class PositioningState : public GameState {
     float m_LockValue { 0.0f };
 
     bool m_Lock = false;
+    bool m_SoftDrop = false;
 
     std::unordered_map<Direction, int> m_DirectionsQueue;
     std::unordered_map<Direction, int> m_DirectionStep;
@@ -105,6 +111,8 @@ public:
 
     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    virtual void Enter() noexcept override;
+    virtual void Exit() noexcept override;
     // virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
 

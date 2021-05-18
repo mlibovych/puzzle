@@ -38,6 +38,8 @@ const std::string g_BackPath = "assets/pure.png";
 const std::string g_BorderPath = "assets/border.png";
 const std::string g_BlankPath = "assets/blank.png";
 
+class App;
+
 struct alignas(16) Block
 {
     ::MiniKit::Graphics::Color color{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -93,11 +95,48 @@ public:
 
     virtual void React(const GameEvent& event) noexcept;
     void AddtoScore() noexcept;
+    void AddtoScore(int amount) noexcept;
     void ClearScore() noexcept;
 };
 
-class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
-                   public std::enable_shared_from_this<Game>
+enum class Element
+{
+    MENU,
+    GAME
+};
+
+class AppElement
+{
+protected:
+    std::weak_ptr<App> m_App;
+public:
+    AppElement(std::shared_ptr<App> app) : m_App(app)
+    {
+
+
+    }
+
+    virtual ~AppElement()
+    {
+
+    }
+
+    virtual void Init() = 0;
+    virtual void Draw(::MiniKit::Engine::Context& context) noexcept = 0;
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept = 0;
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
+    {
+
+    }
+    
+    virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
+    {
+
+    }
+
+};
+
+class Game : public AppElement, public std::enable_shared_from_this<Game>
 {
     friend class GameState;
     friend class SpawnState;
@@ -117,15 +156,13 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     ::std::unique_ptr<Settings> m_Settings;
 
-    States m_State;
+    States m_State {States::COUNT};
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
 
     ::std::unique_ptr<EventSystem> m_EventSystem { nullptr };
     ::std::unique_ptr<GridResolver> m_GridResolver { nullptr };
     ::std::unique_ptr<GridManager> m_GridManager { nullptr };
     ::std::unique_ptr<ScoreManager> m_ScoreManager { nullptr };
-
-    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
 
     ::std::array<::std::array<::std::unique_ptr<Block>, g_FieldWidth>, g_FieldHeight> m_Blocks;
     ::std::array<::std::array<SpriteEntity, g_FieldWidth>, g_FieldHeight> m_Field;
@@ -137,7 +174,6 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     int m_TetrominosFrequency {1};
 
     ::MiniKit::Graphics::float2 m_BlockScale{ 1.0f, 1.0f };
-    ::MiniKit::Graphics::float2 m_BackgroundScale{ 1.0f, 1.0f };
 
     float m_FallSpeed { 0.600f };
     float m_SideSpeed { 0.100f };
@@ -157,10 +193,7 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
     float m_LevelNumberY { 0.0f };
     float m_LinesNumberY { 0.0f };
 
-    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState {};
-    
     void Draw(::MiniKit::Engine::Context& context) noexcept;
-    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
@@ -178,13 +211,43 @@ class Game final : public ::MiniKit::Engine::Application, public ::MiniKit::Plat
 
     void UpdateSettings();
 public:
+    Game(::std::shared_ptr<App> app);
+
+    virtual void Init() override;
+
+    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    
+    virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+};
+
+class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
+                   public std::enable_shared_from_this<App> 
+{
+    friend class Menu;
+    friend class Game;
+
+    bool m_Pause { false };
+
+    Element m_Element;
+    ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements;
+
+    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
+    ::MiniKit::Graphics::float2 m_BackgroundScale{ 1.0f, 1.0f };
+
+    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState {};
+    
+    void Draw(::MiniKit::Engine::Context& context) noexcept;
+    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
     ::std::error_code Shutdown(::MiniKit::Engine::Context& context) noexcept override;
     
     void Tick(::MiniKit::Engine::Context& context) noexcept override;
 
-    void KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    virtual void KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     
-    void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    virtual void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
