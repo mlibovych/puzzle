@@ -23,14 +23,14 @@ GameState::~GameState()
 
 }
 
-void GameState::Tick(::MiniKit::Engine::Context& context) noexcept
+void GameState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
     auto game = m_Game.lock();
 
     if (game->m_EventSystem->HaveEvents()) {
         game->m_EventSystem->ProccedEvent();
     }
-    game->Draw(context);
+    game->Draw(context, drawSurface, commandBuffer);
 }
 
 void GameState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -54,7 +54,7 @@ SpawnState::~SpawnState()
 
 }
 
-void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
+void SpawnState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
     auto game = m_Game.lock();
 
@@ -101,7 +101,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
-    GameState::Tick(context);
+    GameState::Tick(context, drawSurface, commandBuffer);
 }
 
 void SpawnState::Enter() noexcept
@@ -133,7 +133,7 @@ void PositioningState::Enter() noexcept
     m_Lock = false;
 }
 
-void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
+void PositioningState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
     auto game = m_Game.lock();
     
@@ -195,7 +195,7 @@ void PositioningState::Tick(::MiniKit::Engine::Context& context) noexcept
             }
         }
     }
-    GameState::Tick(context);
+    GameState::Tick(context, drawSurface, commandBuffer);
 
 }
 
@@ -401,7 +401,7 @@ void LineCompleatedState::GetColor(::MiniKit::Graphics::Color& color, float delt
     }
 }
 
-void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
+void LineCompleatedState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
     auto game = m_Game.lock();
     
@@ -425,7 +425,7 @@ void LineCompleatedState::Tick(::MiniKit::Engine::Context& context) noexcept
         }
     }
     
-    GameState::Tick(context);
+    GameState::Tick(context, drawSurface, commandBuffer);
 }
 
 void LineCompleatedState::Enter() noexcept
@@ -444,7 +444,7 @@ NewGameState::~NewGameState()
     
 }
 
-void NewGameState::Tick(::MiniKit::Engine::Context& context) noexcept
+void NewGameState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
     
     auto game = m_Game.lock();
@@ -455,7 +455,7 @@ void NewGameState::Tick(::MiniKit::Engine::Context& context) noexcept
     
     game->ChangeState(States::SPAWN);
     
-    GameState::Tick(context);
+    GameState::Tick(context, drawSurface, commandBuffer);
 }
 
 void NewGameState::Enter() noexcept
@@ -486,7 +486,7 @@ void NewGameState::Enter() noexcept
     game->m_GridManager->ClearField();
     game->m_ScoreManager->ClearScore();
     game->m_FallSpeed = g_FallSpeed;
-    // game->m_Pause = false;
+    game->m_Pause = false;
 
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
@@ -520,7 +520,7 @@ void PauseState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
     }
 }
 
-void PauseState::Tick(::MiniKit::Engine::Context& context) noexcept
+void PauseState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
    auto game = m_Game.lock();
 
@@ -531,13 +531,15 @@ void PauseState::Enter() noexcept
 {
     auto game = m_Game.lock();
 
-    // game->m_Pause = true;
+    game->m_Pause = true;
 }
 
 void PauseState::Exit() noexcept
 {
     auto game = m_Game.lock();
 
-    game->UpdateSettings();
-    // game->m_Pause = false;
+    if (game->m_Settings->IsOld()) {
+        game->UpdateSettings();
+    }
+    game->m_Pause = false;
 }

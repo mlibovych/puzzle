@@ -1,7 +1,7 @@
 #include <Game.h>
 #include <imgui.h>
 
-Game::Game(::std::shared_ptr<App> parentApp) : AppElement(parentApp)
+Game::Game(::std::shared_ptr<App> app) : AppElement(app)
 {
 
 }
@@ -73,9 +73,9 @@ void Game::Init()
     m_LinesNumberY = m_LinesTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
 }
 
-void Game::Tick(::MiniKit::Engine::Context& context) noexcept
+void Game::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
-    m_States[m_State]->Tick(context);
+    m_States[m_State]->Tick(context, drawSurface, commandBuffer);
 }
 
 void Game::UpdateSettings()
@@ -357,15 +357,8 @@ void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
             "lines", startX, m_LinesTitleY, 50, 60);
 }
 
-void Game::Draw(::MiniKit::Engine::Context& context) noexcept
+void Game::Draw(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
-    //drawing
-    auto& graphicsDevice = context.GetGraphicsDevice();
-    auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
-    ::MiniKit::Graphics::DrawInfo drawSurface{};
-
-    m_App.lock()->DrawBackground(context, drawSurface, commandBuffer);
-
     DrawLogo(context, drawSurface, commandBuffer);
     
     DrawField(context, drawSurface, commandBuffer);
@@ -373,17 +366,6 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
     DrawBlocks(context, drawSurface, commandBuffer);
 
     DrawScore(context, drawSurface, commandBuffer);
-
-
-    // static int counter = 0;
-    // ImGui::Begin("Hello, world!");     
-    // ImGui::SameLine();
-    // ImGui::Text("counter = %d", counter);
-
-    // ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    // ImGui::End();
-
-    graphicsDevice.EndFrame(commandBuffer);
 }
 
 void Game::ChangeState(States state) noexcept
@@ -668,8 +650,12 @@ void ScoreManager::ClearScore() noexcept
 
     //elements
     m_Elements[Element::GAME] = std::make_shared<Game> (shared_from_this());
-    m_Elements[Element::GAME]->Init();
-    m_Element = Element::GAME;
+    m_Elements[Element::MENU] = std::make_shared<Menu> (shared_from_this());
+    for (auto& [key, value] : m_Elements) {
+        value->Init();
+    }
+
+    ChangeElement(Element::GAME);
     return {};
 }
 
@@ -680,7 +666,15 @@ void ScoreManager::ClearScore() noexcept
 
 void App::Tick(::MiniKit::Engine::Context& context) noexcept
 {   
-    m_Elements[m_Element]->Tick(context);
+    auto& graphicsDevice = context.GetGraphicsDevice();
+    auto& commandBuffer = graphicsDevice.BeginFrame(1.0f, 1.0f, 1.0f, 1.0f);
+    ::MiniKit::Graphics::DrawInfo drawSurface{};
+
+    DrawBackground(context, drawSurface, commandBuffer);
+    m_Elements[m_Element]->Tick(context, drawSurface, commandBuffer);
+
+
+    graphicsDevice.EndFrame(commandBuffer);
 }
 
 void App::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept
@@ -733,4 +727,41 @@ void App::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::
         default:
             break;
     }
+}
+
+void App::ChangeElement(Element element) noexcept
+{
+    if (m_Element != Element::COUNT) {
+        m_Elements[m_Element]->Exit();
+    }
+    m_Element = element;
+    m_Elements[m_Element]->Enter();
+}
+
+Menu::Menu(::std::shared_ptr<App> app) : AppElement(app)
+{
+    
+}
+
+void Menu::Init()
+{
+    m_Buttons.push_back({"New game", true});
+    m_Buttons.push_back({"Resume", true});
+    m_Buttons.push_back({"Settings", true});
+    m_Buttons.push_back({"Leaders", true});
+}
+
+void Menu::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
+
+}
+
+void Menu::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+
+}
+
+void Menu::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+
 }

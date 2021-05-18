@@ -33,7 +33,7 @@ public:
     StateMachine(std::shared_ptr<Game> game);
     virtual ~StateMachine();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept = 0;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept = 0;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept = 0;
     virtual void Enter() noexcept = 0;
@@ -47,7 +47,7 @@ public:
     GameState(std::shared_ptr<Game> game);
     ~GameState();
 
-    void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void Enter() noexcept override
@@ -66,7 +66,7 @@ public:
     SpawnState(std::shared_ptr<Game> game);
     ~SpawnState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void Enter() noexcept override;
 };
 
@@ -90,7 +90,7 @@ public:
     PositioningState(std::shared_ptr<Game> game);
     ~PositioningState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 
@@ -109,7 +109,7 @@ public:
     PauseState(std::shared_ptr<Game> game);
     ~PauseState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void Enter() noexcept override;
     virtual void Exit() noexcept override;
@@ -122,7 +122,7 @@ public:
     LineCompleatedState(std::shared_ptr<Game> game);
     ~LineCompleatedState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void Enter() noexcept override;
     void GetColor(::MiniKit::Graphics::Color& color, float delta) noexcept;
     float GetAlpha() noexcept;
@@ -135,7 +135,7 @@ public:
     NewGameState(std::shared_ptr<Game> game);
     ~NewGameState();
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
     virtual void Enter() noexcept override;
 };
 
@@ -146,6 +146,6 @@ public:
 //     GameOverState(std::shared_ptr<Game> game);
 //     ~GameOverState();
 
-//     virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+//     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 //     virtual void Enter() noexcept override;
 // };

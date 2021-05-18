@@ -2,6 +2,7 @@
 
 #include <array>
 #include <chrono>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -102,17 +103,18 @@ public:
 enum class Element
 {
     MENU,
-    GAME
+    GAME,
+    COUNT
 };
 
 class AppElement
 {
+    friend class App;
 protected:
     std::weak_ptr<App> m_App;
 public:
     AppElement(std::shared_ptr<App> app) : m_App(app)
     {
-
 
     }
 
@@ -122,8 +124,9 @@ public:
     }
 
     virtual void Init() = 0;
-    virtual void Draw(::MiniKit::Engine::Context& context) noexcept = 0;
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept = 0;
+
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept = 0;
+
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
     {
 
@@ -134,10 +137,45 @@ public:
 
     }
 
+    virtual void Enter() noexcept
+    {
+
+    }
+
+    virtual void Exit() noexcept
+    {
+
+    }
+
+};
+
+struct Button
+{
+    std::string title { "Button" };
+    bool active { true };
+    std::function<void()> callback;
+};
+
+class Menu : public AppElement
+{
+    std::deque<Button> m_Buttons { };
+    size_t m_ActiveButtonIdx { 0 };
+public:
+    Menu(::std::shared_ptr<App> app);
+
+    virtual void Init() override;
+
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
+
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+    
+    virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
 
 class Game : public AppElement, public std::enable_shared_from_this<Game>
-{
+{   
+    friend class Menu;
+
     friend class GameState;
     friend class SpawnState;
     friend class PositioningState;
@@ -153,6 +191,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     int m_ClearedLines { 0 };
     int m_Level { 0 };
     bool m_Ghost { true };
+    bool m_Pause { false };
 
     ::std::unique_ptr<Settings> m_Settings;
 
@@ -171,7 +210,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     ::std::unique_ptr<Tetromino> m_Tetromino { nullptr };
     ::std::unique_ptr<Tetromino> m_TetrominoGhost { nullptr };
     ::std::unique_ptr<Tetromino> m_NextTetromino { nullptr };
-    int m_TetrominosFrequency {1};
+    int m_TetrominosFrequency { 1 };
 
     ::MiniKit::Graphics::float2 m_BlockScale{ 1.0f, 1.0f };
 
@@ -193,7 +232,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     float m_LevelNumberY { 0.0f };
     float m_LinesNumberY { 0.0f };
 
-    void Draw(::MiniKit::Engine::Context& context) noexcept;
+    void Draw(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
@@ -215,7 +254,7 @@ public:
 
     virtual void Init() override;
 
-    virtual void Tick(::MiniKit::Engine::Context& context) noexcept override;
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     
@@ -228,10 +267,8 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     friend class Menu;
     friend class Game;
 
-    bool m_Pause { false };
-
-    Element m_Element;
-    ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements;
+    Element m_Element { Element::COUNT };
+    ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
 
     ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
     ::MiniKit::Graphics::float2 m_BackgroundScale{ 1.0f, 1.0f };
@@ -240,6 +277,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     
     void Draw(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
+    void ChangeElement(Element element) noexcept;
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
