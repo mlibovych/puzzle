@@ -486,11 +486,12 @@ void NewGameState::Enter() noexcept
     game->m_GridManager->ClearField();
     game->m_ScoreManager->ClearScore();
     game->m_FallSpeed = g_FallSpeed;
-    game->m_Pause = false;
 
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
     }
+
+    game->m_App.lock()->SetPause(false);
 }
 
 PauseState::PauseState(std::shared_ptr<Game> game) :
@@ -524,14 +525,15 @@ void PauseState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
 {
    auto game = m_Game.lock();
 
-    // game->m_Menu->Draw(context);
+   GameState::Tick(context, drawSurface, commandBuffer);
 }
 
 void PauseState::Enter() noexcept
 {
     auto game = m_Game.lock();
-
-    game->m_Pause = true;
+    
+    game->m_App.lock()->SetPause(true);
+    game->m_App.lock()->ChangeElement(Element::MENU);
 }
 
 void PauseState::Exit() noexcept
@@ -541,5 +543,4 @@ void PauseState::Exit() noexcept
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
     }
-    game->m_Pause = false;
 }

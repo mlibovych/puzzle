@@ -1,6 +1,8 @@
 #include <Game.h>
 #include <imgui.h>
 
+using ::MiniKit::Platform::Keycode;
+
 Game::Game(::std::shared_ptr<App> app) : AppElement(app)
 {
 
@@ -286,18 +288,16 @@ void Game::DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::D
     DrawNumber(context, drawSurface, commandBuffer, m_ClearedLines);
 }
 
-void Game::DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+void App::DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                     ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
                     const std::string text, float& x, float& y, float width, float height) noexcept
 {
-    auto app = m_App.lock();
-
     for (const char c : text) {
         if (!isalpha(c)) {
             continue;
         }
         char C = std::toupper(c);
-        auto image = app->m_Images[std::string {C}];
+        auto image = m_Images[std::string {C}];
 
         drawSurface.position.y = y;
         drawSurface.position.x = x;
@@ -323,7 +323,7 @@ void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
     auto sideBarCenterX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * app->m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2;
     auto startX = sideBarCenterX - (4 * 40.0f + g_Padding + logoWidth) / 2;
     
-    DrawText(context, drawSurface, commandBuffer, g_WhiteColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_WhiteColor,
             "ucode", startX, m_LogoY, 40, 50);
     
     // square image
@@ -337,23 +337,23 @@ void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::Dr
     //
     startX += g_Padding + 10;
 
-    DrawText(context, drawSurface, commandBuffer, g_BlackColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_BlackColor,
             "puzzle", startX, m_LogoY, 50, 60);
 
     startX = sideBarCenterX - (3 * 50.0f) / 2;
-    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
             "next", startX, m_NextTetrominoTitleY, 50, 60);
     
     startX = sideBarCenterX - (4 * 50.0f) / 2;
-    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
             "score", startX, m_ScoreTitleY, 50, 60);
 
     startX = sideBarCenterX - (4 * 50.0f) / 2;
-    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
             "level", startX, m_LevelTitleY, 50, 60);
 
     startX = sideBarCenterX - (4 * 50.0f) / 2;
-    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+    app->DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
             "lines", startX, m_LinesTitleY, 50, 60);
 }
 
@@ -655,7 +655,7 @@ void ScoreManager::ClearScore() noexcept
         value->Init();
     }
 
-    ChangeElement(Element::GAME);
+    ChangeElement(Element::MENU);
     return {};
 }
 
@@ -745,23 +745,109 @@ Menu::Menu(::std::shared_ptr<App> app) : AppElement(app)
 
 void Menu::Init()
 {
-    m_Buttons.push_back({"New game", true});
+    m_Buttons.push_back({"Newgame", true});
     m_Buttons.push_back({"Resume", true});
     m_Buttons.push_back({"Settings", true});
     m_Buttons.push_back({"Leaders", true});
 }
 
-void Menu::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+void Menu::Enter() noexcept
 {
+    auto resumeButtonIt = std::find_if(m_Buttons.begin(), m_Buttons.end(), [] (const Button& b) {
+        return b.title == "Resume";
+    });
+    resumeButtonIt->active = m_App.lock()->m_Pause;
+}
 
+void Menu::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{   
+    auto app = m_App.lock();
+    auto& image = *app->m_Images["border"];
+
+    float width = 400.0f;
+    float height = 100.0f;
+    float startX = 0;
+    float startY = 1800.0f / 2 - g_Padding * 2 - 400;
+    auto scaleX = image.GetSize().width / width;
+    auto scaleY = static_cast<float> (image.GetSize().height) / height;
+    
+    size_t count = 0;
+    for (const auto& button : m_Buttons) {
+        auto textX = startX - (button.title.size() - 1 ) * 40 / 2;
+
+        startY -= height / 2;
+        if (m_ActiveButtonIdx == count) {
+            commandBuffer.SetImage(image);
+            drawSurface.tint = g_OrangeColor;
+            drawSurface.position = { startX, startY };
+            drawSurface.scale = { scaleY, scaleX };
+
+            commandBuffer.Draw(drawSurface);
+        }
+        auto color = g_WhiteColor;
+        if (!m_Buttons[count].active) {
+            color.alpha = 0.5f;
+        }
+        app->DrawText(context, drawSurface, commandBuffer, color,
+            button.title, textX, startY, 40, 50);
+
+        startY -= height / 2 + g_Padding;
+        count++;
+    }
+}
+
+void Menu::GetNextButton() noexcept
+{
+    if (++m_ActiveButtonIdx > m_Buttons.size() - 1) {
+        m_ActiveButtonIdx = 0;
+    }
+    if (!m_Buttons[m_ActiveButtonIdx].active) {
+        GetNextButton();
+    }
+}
+
+void Menu::GetPreviousButton() noexcept
+{
+    if (--m_ActiveButtonIdx < 0) {
+        m_ActiveButtonIdx = m_Buttons.size() - 1;
+    }
+    if (!m_Buttons[m_ActiveButtonIdx].active) {
+        GetPreviousButton();
+    }
 }
 
 void Menu::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
-
+    switch (event.keycode)
+    {
+        case Keycode::KeyC:
+        {
+            auto app = m_App.lock();
+    
+            app->ChangeElement(Element::GAME);
+            break;
+        }
+        case Keycode::KeyDown:
+        {   
+            GetNextButton();
+            break;
+        }
+        case Keycode::KeyUp:
+        {   
+            GetPreviousButton();
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 void Menu::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
 
+}
+
+void App::SetPause(bool pause) noexcept
+{
+    m_Pause = pause;
 }

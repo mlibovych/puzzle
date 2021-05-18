@@ -159,11 +159,16 @@ struct Button
 class Menu : public AppElement
 {
     std::deque<Button> m_Buttons { };
-    size_t m_ActiveButtonIdx { 0 };
+    int m_ActiveButtonIdx { 0 };
+
+    void GetNextButton() noexcept;
+    void GetPreviousButton() noexcept;
 public:
     Menu(::std::shared_ptr<App> app);
 
     virtual void Init() override;
+
+    virtual void Enter() noexcept override;
 
     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 
@@ -191,7 +196,6 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     int m_ClearedLines { 0 };
     int m_Level { 0 };
     bool m_Ghost { true };
-    bool m_Pause { false };
 
     ::std::unique_ptr<Settings> m_Settings;
 
@@ -239,9 +243,6 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     void DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept;
     void DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-    void DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
-                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
-                    const std::string text, float& x, float& y, float width, float height) noexcept;
     void ChangeState(States state) noexcept;
     bool CheckCollision(Tetromino* tetromino);
     bool CheckSideCollision(int step);
@@ -267,6 +268,8 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     friend class Menu;
     friend class Game;
 
+    bool m_Pause { false };
+
     Element m_Element { Element::COUNT };
     ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
 
@@ -277,7 +280,9 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     
     void Draw(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-    void ChangeElement(Element element) noexcept;
+    void DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
+                    const std::string text, float& x, float& y, float width, float height) noexcept;
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
@@ -288,4 +293,8 @@ public:
     virtual void KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     
     virtual void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+
+    void ChangeElement(Element element) noexcept;
+
+    void SetPause(bool pause) noexcept;
 };
