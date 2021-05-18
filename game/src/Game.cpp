@@ -46,6 +46,7 @@
 
         m_Images[letter] = graphicsDevice.CreateImage("assets/" + letter + ".png");
     }
+    m_Images[" "] = graphicsDevice.CreateImage(g_BlankPath);
 
     //field background
     const auto& imageSize = m_Images["field"]->GetSize();
@@ -57,20 +58,20 @@
     const auto imageScaleY = static_cast<float>(drawableHeight - g_Padding * 2) / static_cast<float>(imagesGridPixelsHeight);
     m_BlockScale = {imageScaleY, imageScaleY};
 
-    m_AnchorPositionX =  -0.5f * drawableWidth + imageScaleY * imageSize.width / 2 + g_Padding;
-    m_AnchorPositionY =  0.5f * drawableHeight - imageScaleY * imageSize.width / 2 - g_Padding;
+    auto anchorPositionX =  -0.5f * drawableWidth + imageScaleY * imageSize.width / 2 + g_Padding;
+    auto anchorPositionY =  0.5f * drawableHeight - imageScaleY * imageSize.width / 2 - g_Padding;
 
     for (int y = g_FieldHeight - 1; y >= 0; y--) {
         for (int x = 0; x < g_FieldWidth; x++) {
             auto& cell = m_Field[y][x];
 
-            cell.position.x = m_AnchorPositionX + imageScaleY * imageSize.width * x;
-            cell.position.y = m_AnchorPositionY - imageScaleY * imageSize.width * y;
+            cell.position.x = anchorPositionX + imageScaleY * imageSize.width * x;
+            cell.position.y = anchorPositionY - imageScaleY * imageSize.width * y;
         }
     }
 
     //next tetromino position
-    m_NextTetrominoX = (drawableWidth - (m_BlockScale.x * imageSize.width * g_FieldWidth + g_Padding * 2)) / 2 - m_BlockScale.x * imageSize.width * 2;
+    m_NextTetrominoX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2 - (3 * g_BlockWidth) / 2;
 
     //background
     const auto& backSize = m_Images["back"]->GetSize();
@@ -79,7 +80,17 @@
     m_BackgroundScale = {backImageScaleX, backImageScaleY};
     
     //numbers
-   
+    auto logoHeight = 60.0f + 20.f;
+    m_LogoY = 0.5f * context.GetWindow().GetDrawableHeight() - g_Padding - 0.5f * logoHeight;
+    m_NextTetrominoTitleY = m_LogoY - (g_Padding * 3 + 0.5f * logoHeight + 0.5f * 60);
+    m_NextTetrominoY = m_NextTetrominoTitleY - (3 * g_BlockWidth) / 2;
+
+    m_ScoreTitleY = m_NextTetrominoY - (g_Padding * 3 + (4 * g_BlockWidth) / 2 + 0.5f * 60);;
+    m_ScoreNumberY = m_ScoreTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
+    m_LevelTitleY = m_ScoreNumberY - 0.5f * 60 * 2 - 3 * g_Padding;
+    m_LevelNumberY = m_LevelTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
+    m_LinesTitleY = m_LevelNumberY - 0.5f * 60 * 2 - 3 * g_Padding;
+    m_LinesNumberY = m_LinesTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
     return {};
 }
 
@@ -199,15 +210,15 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
 
     //next
     const auto& imageSize = m_Images["field"]->GetSize();
-    auto displace = m_NextTetromino->m_Shape.size() == 4 ? 0 : 1;
+    auto displace = m_NextTetromino->m_Shape.size() == 2 ? 1 : 0;
 
     if (m_NextTetromino) {
         for (size_t y = 0; y < m_NextTetromino->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_NextTetromino->m_Shape[y].size(); x++) {
                 if (m_NextTetromino->m_Shape[y][x]) {
                     drawSurface.tint = m_NextTetromino->m_Color;
-                    drawSurface.position.x = m_AnchorPositionX + m_BlockScale.x * imageSize.width * (g_FieldWidth + x + displace) + m_NextTetrominoX;
-                    drawSurface.position.y = m_AnchorPositionY - m_BlockScale.y * imageSize.height * y - g_Padding - 200;
+                    drawSurface.position.x = m_BlockScale.x * imageSize.width * ( x + displace) + m_NextTetrominoX;
+                    drawSurface.position.y = m_NextTetrominoY - m_BlockScale.y * imageSize.height * y - g_Padding;
                     drawSurface.scale = m_BlockScale;
 
                     commandBuffer.Draw(drawSurface);
@@ -257,7 +268,7 @@ void Game::DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphi
 void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept
 {
-     auto imageX = 0.5f * static_cast<float>(context.GetWindow().GetDrawableWidth() - g_Padding);
+    auto imageX = 0.5f * static_cast<float>(context.GetWindow().GetDrawableWidth() - g_Padding);
     do {
         auto digit = number % 10;
 
@@ -265,7 +276,7 @@ void Game::DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
 
         const auto& imageSize = m_Images[std::to_string(digit)]->GetSize();
         const auto imageScaleX = 50 / static_cast<float> (imageSize.width);
-        const auto imageScaleY = 100 / static_cast<float> (imageSize.height);
+        const auto imageScaleY = 60 / static_cast<float> (imageSize.height);
 
         drawSurface.position.x = imageX - imageSize.width * imageScaleX;
         drawSurface.tint = g_OrangeColor;
@@ -290,60 +301,71 @@ void Game::DrawScore(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::D
     DrawNumber(context, drawSurface, commandBuffer, m_ClearedLines);
 }
 
+void Game::DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
+                    const std::string text, float& x, float& y, float width, float height) noexcept
+{
+    for (const char c : text) {
+        if (!isalpha(c)) {
+            continue;
+        }
+        char C = std::toupper(c);
+        auto image = m_Images[std::string {C}];
+
+        drawSurface.position.y = y;
+        drawSurface.position.x = x;
+        drawSurface.tint = color;
+        drawSurface.scale = {width / image->GetSize().width, height / image->GetSize().height};
+
+        commandBuffer.SetImage(*image.get());
+        commandBuffer.Draw(drawSurface);
+
+        x += width;
+    }
+}
+
 void Game::DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
-    auto height = 60.0f + 20.f;
-    auto width = 50.0f * 6 + 20.0f;
+    auto logoHeight = 60.0f + 20.f;
+    auto logoWidth = 50.0f * 6 + 20.0f;
 
-    //top and half from square size
-    auto startY = 0.5f * context.GetWindow().GetDrawableHeight() - g_Padding - 0.5f * height;
     //get center position from free space
-    auto startX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2 - (4 * 40.0f + g_Padding + width) / 2;
-    for (const char c : "ucode\0") {
-        if (!isalpha(c)) {
-            continue;
-        }
-        char C = std::toupper(c);
-        auto image = m_Images[std::string {C}];
-
-        drawSurface.position.y = startY;
-        drawSurface.position.x = startX;
-        drawSurface.tint = { 1.0f, 1.0f, 1.0f, 1.0f};
-        drawSurface.scale = {40.0f / image->GetSize().width, 50.0f / image->GetSize().height};
-
-        commandBuffer.SetImage(*image.get());
-        commandBuffer.Draw(drawSurface);
-
-        startX += 40.0f;
-    }
+    auto sideBarCenterX = ((0.5f * context.GetWindow().GetDrawableWidth() - g_Padding) + (-0.5f * context.GetWindow().GetDrawableWidth() + m_BlockScale.x * m_Images["field"]->GetSize().width * g_FieldWidth + 2 * g_Padding)) / 2;
+    auto startX = sideBarCenterX - (4 * 40.0f + g_Padding + logoWidth) / 2;
     
-    drawSurface.position.y = startY;
-    drawSurface.position.x = startX - 0.5f * 50.0f + g_Padding + 0.5f * width;
+    DrawText(context, drawSurface, commandBuffer, g_WhiteColor,
+            "ucode", startX, m_LogoY, 40, 50);
+    
+    // square image
+    drawSurface.position.y = m_LogoY;
+    drawSurface.position.x = startX - 0.5f * 50.0f + g_Padding + 0.5f * logoWidth;
     drawSurface.tint = g_OrangeColor;
-    drawSurface.scale = {width / m_Images["border"]->GetSize().width, height / m_Images["border"]->GetSize().height};
+    drawSurface.scale = {logoWidth / m_Images["border"]->GetSize().width, logoHeight / m_Images["border"]->GetSize().height};
 
     commandBuffer.SetImage(*m_Images["border"]);
     commandBuffer.Draw(drawSurface);
-
+    //
     startX += g_Padding + 10;
-    for (const char c : "puzzle\0") {
-        if (!isalpha(c)) {
-            continue;
-        }
-        char C = std::toupper(c);
-        auto image = m_Images[std::string {C}];
 
-        drawSurface.position.y = startY;
-        drawSurface.position.x = startX;
-        drawSurface.tint = { 0.1f, 0.1f, 0.1f, 1.0f};
-        drawSurface.scale = {50.0f / image->GetSize().width, 60.0f / image->GetSize().height};
+    DrawText(context, drawSurface, commandBuffer, g_BlackColor,
+            "puzzle", startX, m_LogoY, 50, 60);
 
-        commandBuffer.SetImage(*image.get());
-        commandBuffer.Draw(drawSurface);
+    startX = sideBarCenterX - (3 * 50.0f) / 2;
+    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+            "next", startX, m_NextTetrominoTitleY, 50, 60);
+    
+    startX = sideBarCenterX - (4 * 50.0f) / 2;
+    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+            "score", startX, m_ScoreTitleY, 50, 60);
 
-        startX += 50.0f;
-    }
+    startX = sideBarCenterX - (4 * 50.0f) / 2;
+    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+            "level", startX, m_LevelTitleY, 50, 60);
+
+    startX = sideBarCenterX - (4 * 50.0f) / 2;
+    DrawText(context, drawSurface, commandBuffer, g_OrangeColor,
+            "lines", startX, m_LinesTitleY, 50, 60);
 }
 
 void Game::Draw(::MiniKit::Engine::Context& context) noexcept
@@ -362,6 +384,15 @@ void Game::Draw(::MiniKit::Engine::Context& context) noexcept
     DrawBlocks(context, drawSurface, commandBuffer);
 
     DrawScore(context, drawSurface, commandBuffer);
+
+
+    // static int counter = 0;
+    // ImGui::Begin("Hello, world!");     
+    // ImGui::SameLine();
+    // ImGui::Text("counter = %d", counter);
+
+    // ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    // ImGui::End();
 
     graphicsDevice.EndFrame(commandBuffer);
 }
