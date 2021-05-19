@@ -522,8 +522,12 @@ void PauseState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
 void PauseState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {
    auto game = m_Game.lock();
+   auto app = game->m_App.lock();
 
    GameState::Tick(context, drawSurface, commandBuffer);
+   float x = 0 - 5 * 80 / 2;
+   float y = 200;
+   app->DrawText(drawSurface, commandBuffer, g_OrangeColor, "Pause", x, y, 80, 90);
 }
 
 void PauseState::Enter() noexcept

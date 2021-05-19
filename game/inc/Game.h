@@ -293,11 +293,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
 
     std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState {};
     
-    void Draw(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-    void DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
-                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
-                    const std::string text, float& x, float& y, float width, float height) noexcept;
 public:
     ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
     
@@ -310,4 +306,8 @@ public:
     virtual void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 
     void ChangeElement(Element element) noexcept;
+
+    void DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
+                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
+                    const std::string text, float& x, float& y, float width, float height) noexcept;
 };
