@@ -1,5 +1,5 @@
-#include "StateMachine.h"
-#include "Game.h"
+#include <StateMachine.h>
+#include <Game.h>
 
 using ::MiniKit::Platform::Keycode;
 
@@ -94,7 +94,7 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
                 if (game->m_Tetromino->m_Shape[y][x]) {
                     if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
                         game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
-                        game->ChangeState(States::NEW_GAME);
+                        game->ChangeState(States::GAME_OVER);
                         break;
                     }
                 }
@@ -466,8 +466,6 @@ void NewGameState::Enter() noexcept
         return;
     }
 
-    m_Value = 0.0f;
-
     //next tetromino
     std::mt19937 gen(m_Random());
     std::uniform_int_distribution<> dis(0, game->m_TetrominosFrequency - 1);
@@ -491,7 +489,7 @@ void NewGameState::Enter() noexcept
         game->UpdateSettings();
     }
 
-    game->m_App.lock()->SetPause(false);
+    game->m_Pause = false;
 }
 
 PauseState::PauseState(std::shared_ptr<Game> game) :
@@ -532,7 +530,7 @@ void PauseState::Enter() noexcept
 {
     auto game = m_Game.lock();
     
-    game->m_App.lock()->SetPause(true);
+    game->m_Pause = true;
     game->m_App.lock()->ChangeElement(Element::MENU);
 }
 
@@ -540,7 +538,48 @@ void PauseState::Exit() noexcept
 {
     auto game = m_Game.lock();
 
+    game->m_Pause = false;
     if (game->m_Settings->IsOld()) {
         game->UpdateSettings();
     }
+}
+
+GameOverState::GameOverState(std::shared_ptr<Game> game) : GameState(game), ElementWithButtons(game->m_App.lock())
+{
+    m_Buttons.push_back({"Main menu", true, [&]() {
+        auto app = m_Game.lock()->m_App.lock();
+
+        app->ChangeElement(Element::MENU);
+    }});
+    m_Buttons.push_back({"New game", true, [&]() {
+        auto game = m_Game.lock();
+        
+        game->ChangeState(States::NEW_GAME);
+    }});
+}
+
+GameOverState::~GameOverState()
+{
+
+}
+
+void GameOverState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
+    auto game = m_Game.lock();
+
+    float startX = 0;
+    float startY = 1800.0f / 2 - g_Padding * 2 - 400;
+
+    game->Draw(context, drawSurface, commandBuffer);
+    DrawButtons(drawSurface, commandBuffer,startX, startY);
+}
+
+void GameOverState::Enter() noexcept
+{
+
+}
+
+void GameOverState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    ElementWithButtons::KeyDown(event);
 }

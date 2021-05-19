@@ -10,8 +10,10 @@
 #include <unordered_map>
 
 #include <MiniKit/MiniKit.hpp>
+#include <Game.h>
 
 class Game;
+class Button;
 
 enum class States
 {
@@ -60,7 +62,8 @@ public:
     }
 };
 
-class SpawnState : public GameState {
+class SpawnState : public GameState
+{
     std::random_device m_Random;
 public:
     SpawnState(std::shared_ptr<Game> game);
@@ -76,7 +79,8 @@ enum class Direction
     RIGHT
 };
 
-class PositioningState : public GameState {
+class PositioningState : public GameState
+{
     float m_DownValue { 0.0f };
     float m_SideValue { 0.0f };
     float m_LockValue { 0.0f };
@@ -113,10 +117,10 @@ public:
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     virtual void Enter() noexcept override;
     virtual void Exit() noexcept override;
-    // virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
 
-class LineCompleatedState : public GameState {
+class LineCompleatedState : public GameState
+{
     float m_Value { 0.0f };
 public:
     LineCompleatedState(std::shared_ptr<Game> game);
@@ -128,8 +132,8 @@ public:
     float GetAlpha() noexcept;
 };
 
-class NewGameState : public GameState {
-    float m_Value { 0.0f };
+class NewGameState : public GameState 
+{
     std::random_device m_Random;
 public:
     NewGameState(std::shared_ptr<Game> game);
@@ -139,13 +143,13 @@ public:
     virtual void Enter() noexcept override;
 };
 
-// class GameOverState : public GameState {
-//     float m_Value { 0.0f };
-//     std::random_device m_Random;
-// public:
-//     GameOverState(std::shared_ptr<Game> game);
-//     ~GameOverState();
+class GameOverState : public GameState, public ElementWithButtons
+{
+public:
+    GameOverState(std::shared_ptr<Game> game);
+    ~GameOverState();
 
-//     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
-//     virtual void Enter() noexcept override;
-// };
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
+    virtual void Enter() noexcept override;
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+};

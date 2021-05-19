@@ -11,9 +11,12 @@
 #include <EventSystem.h>
 #include <Tetromino.h>
 #include <Settings.h>
-#include <StateMachine.h>
+// #include <StateMachine.h>
 
 #include <MiniKit/MiniKit.hpp>
+
+enum class States;
+class StateMachine;
 
 constexpr int g_FieldWidth = 10;
 constexpr int g_FieldHeight = 20;
@@ -123,7 +126,7 @@ public:
 
     }
 
-    virtual void Init() = 0;
+    virtual void Init(::MiniKit::Engine::Context& context) = 0;
 
     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept = 0;
 
@@ -156,25 +159,36 @@ struct Button
     std::function<void()> callback;
 };
 
-class Menu : public AppElement
+class ElementWithButtons
 {
+    std::weak_ptr<App> m_App;
+protected:
     std::deque<Button> m_Buttons { };
     int m_ActiveButtonIdx { 0 };
-
     void GetNextButton() noexcept;
     void GetPreviousButton() noexcept;
+    void DrawButtons(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y) noexcept;
+public:
+    ElementWithButtons(std::shared_ptr<App> app) : m_App(app)
+    {
+
+    }
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept;
+};
+
+class Menu : public AppElement, public ElementWithButtons
+{
 public:
     Menu(::std::shared_ptr<App> app);
 
-    virtual void Init() override;
+    virtual void Init(::MiniKit::Engine::Context& context) override;
 
     virtual void Enter() noexcept override;
 
     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
-    
-    virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+
 };
 
 class Game : public AppElement, public std::enable_shared_from_this<Game>
@@ -187,6 +201,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     friend class LineCompleatedState;
     friend class NewGameState;
     friend class PauseState;
+    friend class GameOverState;
 
     friend class GridResolver;
     friend class GridManager;
@@ -196,10 +211,11 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     int m_ClearedLines { 0 };
     int m_Level { 0 };
     bool m_Ghost { true };
+    bool m_Pause { false };
 
     ::std::unique_ptr<Settings> m_Settings;
 
-    States m_State {States::COUNT};
+    States m_State;
     ::std::unordered_map<States, ::std::unique_ptr<StateMachine>> m_States;
 
     ::std::unique_ptr<EventSystem> m_EventSystem { nullptr };
@@ -253,7 +269,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
 public:
     Game(::std::shared_ptr<App> app);
 
-    virtual void Init() override;
+    virtual void Init(::MiniKit::Engine::Context& context) override;
 
     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 
@@ -267,8 +283,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
 {
     friend class Menu;
     friend class Game;
-
-    bool m_Pause { false };
+    friend class ElementWithButtons;
 
     Element m_Element { Element::COUNT };
     ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
@@ -280,7 +295,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     
     void Draw(::MiniKit::Engine::Context& context) noexcept;
     void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-    void DrawText(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
+    void DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
                     ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
                     const std::string text, float& x, float& y, float width, float height) noexcept;
 public:
@@ -295,6 +310,4 @@ public:
     virtual void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 
     void ChangeElement(Element element) noexcept;
-
-    void SetPause(bool pause) noexcept;
 };
