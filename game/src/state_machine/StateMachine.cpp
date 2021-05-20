@@ -87,19 +87,25 @@ void SpawnState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
         game->m_Tetromino->m_Y = 0 - game->m_Tetromino->m_Shape.size() / 2;
         game->m_TetrominoGhost = ::std::make_unique<Tetromino> (*game->m_Tetromino.get());
 
-        game->ChangeState(States::POSITIONING);
+        States state = States::POSITIONING;
 
-        for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
-            for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
-                if (game->m_Tetromino->m_Shape[y][x]) {
-                    if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
-                        game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
-                        game->ChangeState(States::GAME_OVER);
-                        break;
+        try {
+            for (size_t y = 0; y < game->m_Tetromino->m_Shape.size(); y++) {
+                for (size_t x = 0; x < game->m_Tetromino->m_Shape[y].size(); x++) {
+                    if (game->m_Tetromino->m_Shape[y][x]) {
+                        if (game->m_Tetromino->m_Y + static_cast<int> (y) >= 0 &&
+                            game->m_Blocks[game->m_Tetromino->m_Y + y][game->m_Tetromino->m_X + x]) {
+                            throw(true);
+                        }
                     }
                 }
             }
         }
+        catch (bool) {
+            state = States::GAME_OVER;
+            game->m_Tetromino = nullptr;
+        }
+        game->ChangeState(state);
     }
     GameState::Tick(context, drawSurface, commandBuffer);
 }
@@ -550,14 +556,14 @@ void PauseState::Exit() noexcept
 
 GameOverState::GameOverState(std::shared_ptr<Game> game) : GameState(game), ElementWithButtons(game->m_App.lock())
 {
-    m_Buttons.push_back({"Main menu", true, [&]() {
-        auto app = m_Game.lock()->m_App.lock();
-
-        app->ChangeElement(Element::MENU);
-    }});
-    m_Buttons.push_back({"New game", true, [&]() {
+    m_Elements.push_back(Button{"Main menu", true, [&]() {
         auto game = m_Game.lock();
-        
+
+        game->ChangeState(States::NEW_GAME, true);
+    }});
+    m_Elements.push_back(Button{"New game", true, [&]() {
+        auto game = m_Game.lock();
+
         game->ChangeState(States::NEW_GAME);
     }});
 }
@@ -575,7 +581,7 @@ void GameOverState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphic
     float startY = 1800.0f / 2 - g_Padding * 2 - 400;
 
     game->Draw(context, drawSurface, commandBuffer);
-    DrawButtons(drawSurface, commandBuffer,startX, startY);
+    DrawElementsVertical(drawSurface, commandBuffer,startX, startY, 400, 100);
 }
 
 void GameOverState::Enter() noexcept

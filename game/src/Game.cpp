@@ -93,10 +93,6 @@ void Game::UpdateSettings()
     }
     
     m_Tetrominos.clear();
-
-    decltype(auto) ghost = m_Settings->GetData().GetInt("ghoste");
-    m_Ghost = ghost;
-
     m_TetrominosFrequency = 0;
 
     decltype(auto) tetrominos = m_Settings->GetData().GetVector("tetrominos");
@@ -164,7 +160,7 @@ void Game::DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::
     commandBuffer.SetImage(*app->m_Images["block"]);
 
     //ghost
-    if (m_Ghost && m_TetrominoGhost) {
+    if (m_Ghost && m_TetrominoGhost && m_Tetromino) {
         for (size_t y = 0; y < m_TetrominoGhost->m_Shape.size(); y++) {
             for (size_t x = 0; x < m_TetrominoGhost->m_Shape[y].size(); x++) {
                 if (m_TetrominoGhost->m_Shape[y][x] && m_TetrominoGhost->m_Y + static_cast<int> (y) >= 0) {
@@ -370,13 +366,16 @@ void Game::Draw(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawIn
     DrawScore(context, drawSurface, commandBuffer);
 }
 
-void Game::ChangeState(States state) noexcept
+void Game::ChangeState(States state, std::optional<bool> quit) noexcept
 {   
     if (m_State == state) {
         return;
     }
     if (m_State != States::COUNT) {
         m_States[m_State]->Exit();
+    }
+    if (quit && *quit) {
+        m_App.lock()->ChangeElement(Element::MENU);
     }
     m_State = state;
     m_States[m_State]->Enter();
@@ -658,6 +657,7 @@ void ScoreManager::ClearScore() noexcept
     //elements
     m_Elements[Element::GAME] = std::make_shared<Game> (shared_from_this());
     m_Elements[Element::MENU] = std::make_shared<Menu> (shared_from_this());
+    m_Elements[Element::OPTIONS] = std::make_shared<Options> (shared_from_this());
     for (auto& [key, value] : m_Elements) {
         value->Init(context);
     }
@@ -757,30 +757,39 @@ Menu::Menu(::std::shared_ptr<App> app) : AppElement(app), ElementWithButtons(app
 
 void Menu::Init(::MiniKit::Engine::Context& context)
 {
-    m_Buttons.push_back({"New game", true, [&]() {
+    m_Elements.push_back(Button{"New game", true, [&]() {
         auto app = AppElement::m_App.lock();
 
-        static_cast<Game*> (app->m_Elements[Element::GAME].get())->ChangeState(States::NEW_GAME);
-        app->ChangeElement(Element::GAME);
+        app->StartNewGame();
     }});
-    m_Buttons.push_back({"Resume", true, [&]() {
+    m_Elements.push_back(Button{"Resume", true, [&]() {
         auto app = AppElement::m_App.lock();
 
         app->ChangeElement(Element::GAME);
     }});
-    m_Buttons.push_back({"Settings", true});
-    m_Buttons.push_back({"Leaders", true});
-    m_Buttons.push_back({"Exit", true , [&] () {
+    m_Elements.push_back(Button{"Options", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->ChangeElement(Element::OPTIONS);
+    }});
+    m_Elements.push_back(Button{"Leaders", false});
+    m_Elements.push_back(Button{"Exit", true , [&] () {
         context.Terminate();
     }});
 }
 
+void App::StartNewGame() noexcept
+{
+    static_cast<Game*> (m_Elements[Element::GAME].get())->ChangeState(States::NEW_GAME);
+    ChangeElement(Element::GAME);
+}
+
 void Menu::Enter() noexcept
 {
-    auto resumeButtonIt = std::find_if(m_Buttons.begin(), m_Buttons.end(), [] (const Button& b) {
-        return b.title == "Resume";
+    auto resumeButtonIt = std::find_if(m_Elements.begin(), m_Elements.end(), [] (const auto& b) {
+        return std::get<Button> (b).title == "Resume";
     });
-    resumeButtonIt->active = static_cast<Game*> (AppElement::m_App.lock()->m_Elements[Element::GAME].get())->m_Pause;
+    std::get<Button>(*resumeButtonIt).active = AppElement::m_App.lock()->GetGameState();
 }
 
 void Menu::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
@@ -788,38 +797,94 @@ void Menu::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawIn
     float startX = 0;
     float startY = 1800.0f / 2 - g_Padding * 2 - 400;
 
-    DrawButtons(drawSurface, commandBuffer, startX, startY);
+    DrawElementsVertical(drawSurface, commandBuffer, startX, startY, 400, 100);
 }
 
-void ElementWithButtons::DrawButtons(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y) noexcept
+const auto& App::GetImage(std::string name) noexcept
+{
+    return *m_Images[name];
+}
+
+bool App::GetGameState() noexcept
+{
+    return static_cast<Game*> (m_Elements[Element::GAME].get())->m_Pause;
+}
+
+void ElementWithButtons::DrawButton(const Button& button, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept
+{    
+    auto app = m_App.lock();
+    auto& image = app->GetImage("border");
+
+    auto textX = x - (button.title.size() - 1 ) * 40 / 2;
+    auto scaleX = width / image.GetSize().width;
+    auto scaleY = height / static_cast<float> (image.GetSize().height);
+
+    if (active) {
+        commandBuffer.SetImage(image);
+        drawSurface.tint = color;
+        drawSurface.position = { x, y };
+        drawSurface.scale = { scaleX, scaleY };
+
+        commandBuffer.Draw(drawSurface);
+    }
+    auto textColor = g_WhiteColor;
+    if (!button.active) {
+        textColor.alpha = 0.5f;
+    }
+    app->DrawText(drawSurface, commandBuffer, textColor,
+        button.title, textX, y, 40, 50);
+}
+
+void ElementWithButtons::DrawOption(const Option& option, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float height) noexcept
+{   
+    auto app = m_App.lock();
+    auto& image = app->GetImage("border");
+    auto textX = x - ((option.title.size() - 1) * 40 + option.m_Buttons.size() * 200) / 2;
+    auto scaleX = (static_cast<float> (option.title.size()) * 40 + option.m_Buttons.size() * 200 + g_Padding * 2) / image.GetSize().width;
+    auto scaleY = height / static_cast<float> (image.GetSize().height);
+
+    if (active) {
+        commandBuffer.SetImage(image);
+        drawSurface.tint = color;
+        drawSurface.position = { x, y };
+        drawSurface.scale = { scaleX, scaleY };
+
+        commandBuffer.Draw(drawSurface);
+    }
+    auto textColor = g_WhiteColor;
+    app->DrawText(drawSurface, commandBuffer, textColor,
+        option.title, textX, y, 40, 50);
+
+    int count = 0;
+    auto startX = textX + 200 / 2  - 40 / 2;
+
+    for (const auto& button : option.m_Buttons) {
+        DrawButton(button, option.m_ActiveButtonIdx == count, g_BlackColor, drawSurface, commandBuffer, startX, y, 200, 80);
+        startX += 200.0f;
+        count++;
+    }
+}
+
+void ElementWithButtons::DrawElementsVertical(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept
 {
     auto app = m_App.lock();
-    auto& image = *app->m_Images["border"];
-    float width = 400.0f;
-    float height = 100.0f;
-    auto scaleX = image.GetSize().width / width;
-    auto scaleY = static_cast<float> (image.GetSize().height) / height;
+    auto& image = app->GetImage("border");
+    
     
     size_t count = 0;
-    for (const auto& button : m_Buttons) {
-        auto textX = x - (button.title.size() - 1 ) * 40 / 2;
-
+    for (const auto& element : m_Elements) {
+        bool active  =  m_ActiveElementIdx == count;
         y -= height / 2;
-        if (m_ActiveButtonIdx == count) {
-            commandBuffer.SetImage(image);
-            drawSurface.tint = g_OrangeColor;
-            drawSurface.position = { x, y };
-            drawSurface.scale = { scaleY, scaleX };
+        if (std::holds_alternative<Button> (element)) {
+            const auto& button = std::get<Button>(element);
 
-            commandBuffer.Draw(drawSurface);
+            DrawButton(button,active, g_OrangeColor, drawSurface, commandBuffer, x, y, width, height);
         }
-        auto color = g_WhiteColor;
-        if (!m_Buttons[count].active) {
-            color.alpha = 0.5f;
-        }
-        app->DrawText(drawSurface, commandBuffer, color,
-            button.title, textX, y, 40, 50);
+        else {
+            auto& option = std::get<Option>(element);
 
+            DrawOption(option, active, g_OrangeColor, drawSurface, commandBuffer, x, y, height);
+        }
         y -= height / 2 + g_Padding;
         count++;
     }
@@ -827,11 +892,11 @@ void ElementWithButtons::DrawButtons(::MiniKit::Graphics::DrawInfo& drawSurface,
 
 void ElementWithButtons::GetNextButton() noexcept
 {
-    if (m_Buttons.size() > 0) {
-        if (++m_ActiveButtonIdx > m_Buttons.size() - 1) {
-            m_ActiveButtonIdx = 0;
+    if (m_Elements.size() > 0) {
+        if (++m_ActiveElementIdx > m_Elements.size() - 1) {
+            m_ActiveElementIdx = 0;
         }
-        if (!m_Buttons[m_ActiveButtonIdx].active) {
+        if (std::holds_alternative<Button> (m_Elements[m_ActiveElementIdx]) && !std::get<Button> (m_Elements[m_ActiveElementIdx]).active) {
             GetNextButton();
         }
     }
@@ -839,11 +904,11 @@ void ElementWithButtons::GetNextButton() noexcept
 
 void ElementWithButtons::GetPreviousButton() noexcept
 {   
-    if (m_Buttons.size() > 0) {
-        if (--m_ActiveButtonIdx < 0) {
-            m_ActiveButtonIdx = m_Buttons.size() - 1;
+    if (m_Elements.size() > 0) {
+        if (--m_ActiveElementIdx < 0) {
+            m_ActiveElementIdx = m_Elements.size() - 1;
         }
-        if (!m_Buttons[m_ActiveButtonIdx].active) {
+        if (std::holds_alternative<Button> (m_Elements[m_ActiveElementIdx]) && !std::get<Button> (m_Elements[m_ActiveElementIdx]).active) {
             GetPreviousButton();
         }
     }
@@ -863,10 +928,36 @@ void ElementWithButtons::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noe
             GetPreviousButton();
             break;
         }
+        case Keycode::KeyRight:
+        {   
+            if (std::holds_alternative<Option> (m_Elements[m_ActiveElementIdx])) {
+                auto& option = std::get<Option> (m_Elements[m_ActiveElementIdx]);
+
+                if (option.m_ActiveButtonIdx < option.m_Buttons.size() - 1) {
+                    option.m_ActiveButtonIdx++;
+                    option.m_Buttons[option.m_ActiveButtonIdx].callback();
+                }
+            }
+            break;
+        }
+        case Keycode::KeyLeft:
+        {   
+            if (std::holds_alternative<Option> (m_Elements[m_ActiveElementIdx])) {
+                auto& option = std::get<Option> (m_Elements[m_ActiveElementIdx]);
+
+                if (option.m_ActiveButtonIdx > 0) {
+                    option.m_ActiveButtonIdx--;
+                    option.m_Buttons[option.m_ActiveButtonIdx].callback();
+                }
+            }
+            break;
+        }
         case Keycode::KeyEnter:
         {   
-            if (m_Buttons.size() > 0) {
-                m_Buttons[m_ActiveButtonIdx].callback();
+            if (m_Elements.size() > 0) {
+                if (std::holds_alternative<Button> (m_Elements[m_ActiveElementIdx])) {
+                    std::get<Button> (m_Elements[m_ActiveElementIdx]).callback();
+                }
             }
         }
         default:
@@ -877,5 +968,58 @@ void ElementWithButtons::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noe
 void Menu::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
     ElementWithButtons::KeyDown(event);
+}
+
+Options::Options(::std::shared_ptr<App> app) : AppElement(app), ElementWithButtons(app)
+{
+
+}
+
+void Options::Init(::MiniKit::Engine::Context& context)
+{   
+    Option option;
+    option.title = "Ghost piece";
+    option.AddVariant(Button{"On", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->SetGhostPiece(true);
+    }});
+    option.AddVariant(Button{"Off", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->SetGhostPiece(false);
+    }});
+
+    m_Elements.push_back(option);
+    m_Elements.push_back(Button{"Back", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->ChangeElement(Element::MENU);
+    }});
+}
+
+void Options::Exit() noexcept
+{
+    m_ActiveElementIdx = 0;
+}
+
+void Options::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
+{
+    auto app = AppElement::m_App.lock();
+
+    float startX = 0;
+    float startY = 1800.0f / 2 - g_Padding * 2 - 400;
+
+    DrawElementsVertical(drawSurface, commandBuffer, startX, startY, 400, 100);
+}
+
+void Options::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
+{
+    ElementWithButtons::KeyDown(event);
+}
+
+void App::SetGhostPiece(bool value) noexcept
+{
+    static_cast<Game*> (m_Elements[Element::GAME].get())->m_Ghost = value;
 }
     

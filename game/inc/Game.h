@@ -107,6 +107,7 @@ enum class Element
 {
     MENU,
     GAME,
+    OPTIONS,
     COUNT
 };
 
@@ -159,15 +160,30 @@ struct Button
     std::function<void()> callback;
 };
 
+struct Option
+{
+    std::string title { "Option" };
+    std::deque<Button> m_Buttons { };
+    int m_ActiveButtonIdx { 0 };
+
+    template <typename T>
+    void AddVariant(T&& button) noexcept
+    {
+        m_Buttons.emplace_back(button);
+    }
+};
+
 class ElementWithButtons
 {
     std::weak_ptr<App> m_App;
 protected:
-    std::deque<Button> m_Buttons { };
-    int m_ActiveButtonIdx { 0 };
+    std::deque<std::variant<Button, Option>> m_Elements { };
+    int m_ActiveElementIdx { 0 };
     void GetNextButton() noexcept;
     void GetPreviousButton() noexcept;
-    void DrawButtons(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y) noexcept;
+    void DrawElementsVertical(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept;
+    void DrawOption(const Option& option, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float height) noexcept;
+    void DrawButton(const Button& button, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept;
 public:
     ElementWithButtons(std::shared_ptr<App> app) : m_App(app)
     {
@@ -188,12 +204,25 @@ public:
     virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
 
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
+};
 
+class Options : public AppElement , public ElementWithButtons
+{
+public:
+    Options(::std::shared_ptr<App> app);
+
+    virtual void Init(::MiniKit::Engine::Context& context) override;
+
+    virtual void Exit() noexcept override;
+
+    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
+
+    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
 
 class Game : public AppElement, public std::enable_shared_from_this<Game>
 {   
-    friend class Menu;
+    friend class App;
 
     friend class GameState;
     friend class SpawnState;
@@ -259,7 +288,7 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     void DrawNumber(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,
                       ::MiniKit::Graphics::CommandBuffer& commandBuffer, int number) noexcept;
     void DrawLogo(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-    void ChangeState(States state) noexcept;
+    void ChangeState(States state, std::optional<bool> quit = false) noexcept;
     bool CheckCollision(Tetromino* tetromino);
     bool CheckSideCollision(int step);
     void MoveSide(int step);
@@ -283,7 +312,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
 {
     friend class Menu;
     friend class Game;
-    friend class ElementWithButtons;
+    friend class Option;
 
     Element m_Element { Element::COUNT };
     ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
@@ -310,4 +339,12 @@ public:
     void DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
                     ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
                     const std::string text, float& x, float& y, float width, float height) noexcept;
+
+    void StartNewGame() noexcept;
+
+    const auto& GetImage(std::string name) noexcept;
+
+    bool GetGameState() noexcept;
+
+    void SetGhostPiece(bool value) noexcept;
 };
