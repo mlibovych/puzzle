@@ -4,14 +4,15 @@ SET(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
-SET(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra -Wpedantic -g")
+SET(CMAKE_CXX_FLAGS "-std=c++17 -g")
 
 set(TARGET puzzle)
 
 project(${TARGET} LANGUAGES CXX)
 
 set (SOURCES src/main.cpp src/Game.cpp src/state_machine/StateMachine.cpp src/Tetromino.cpp
-    src/EventSystem.cpp src/Settings.cpp)
+    src/EventSystem.cpp src/Settings.cpp src/AppElement.cpp src/App.cpp
+    src/ElementWithButtons.cpp src/Menu.cpp src/Options.cpp src/Help.cpp)
 
 include_directories(inc inc/state_machine)
 

@@ -9,8 +9,9 @@
 #include <vector>
 #include <unordered_map>
 
+#include <ElementWithButtons.h>
+
 #include <MiniKit/MiniKit.hpp>
-#include <Game.h>
 
 class Game;
 class Button;

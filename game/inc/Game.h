@@ -11,36 +11,12 @@
 #include <EventSystem.h>
 #include <Tetromino.h>
 #include <Settings.h>
-// #include <StateMachine.h>
+#include <App.h>
+#include <AppElement.h>
+#include <StateMachine.h>
+#include <ElementWithButtons.h>
 
 #include <MiniKit/MiniKit.hpp>
-
-enum class States;
-class StateMachine;
-
-constexpr int g_FieldWidth = 10;
-constexpr int g_FieldHeight = 20;
-
-constexpr int g_BlockWidth = 80;
-constexpr int g_AppWidth = 800;
-constexpr int g_AppHeight = 900;
-constexpr int g_Padding = 10;
-
-constexpr float g_FallSpeed = 0.600f;
-
-constexpr float g_LineCompleatedAnimationTime = 0.5f;
-const ::MiniKit::Graphics::Color g_LineCompleatedColor{ 0.9f, 0.4f, 0.1f, 1.0f };
-const ::MiniKit::Graphics::Color g_OrangeColor { 1.0f, 0.38f, 0.05f, 1.0f };
-const ::MiniKit::Graphics::Color g_BackgroundColor { 0.1f, 0.1f, 0.1f, 1.0f };
-const ::MiniKit::Graphics::Color g_GhostColor { 1.0f, 0.55f, 0.22f, 0.5f };
-const ::MiniKit::Graphics::Color g_WhiteColor { 1.0f, 1.0f, 1.0f, 1.0f };
-const ::MiniKit::Graphics::Color g_BlackColor { 0.0f, 0.0f, 0.0f, 1.0f };
-
-const std::string g_BlockPath = "assets/sq.png"; 
-const std::string g_FieldPath = "assets/back.png";
-const std::string g_BackPath = "assets/pure.png";
-const std::string g_BorderPath = "assets/border.png";
-const std::string g_BlankPath = "assets/blank.png";
 
 class App;
 
@@ -101,123 +77,6 @@ public:
     void AddtoScore() noexcept;
     void AddtoScore(int amount) noexcept;
     void ClearScore() noexcept;
-};
-
-enum class Element
-{
-    MENU,
-    GAME,
-    OPTIONS,
-    COUNT
-};
-
-class AppElement
-{
-    friend class App;
-protected:
-    std::weak_ptr<App> m_App;
-public:
-    AppElement(std::shared_ptr<App> app) : m_App(app)
-    {
-
-    }
-
-    virtual ~AppElement()
-    {
-
-    }
-
-    virtual void Init(::MiniKit::Engine::Context& context) = 0;
-
-    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept = 0;
-
-    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
-    {
-
-    }
-    
-    virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
-    {
-
-    }
-
-    virtual void Enter() noexcept
-    {
-
-    }
-
-    virtual void Exit() noexcept
-    {
-
-    }
-
-};
-
-struct Button
-{
-    std::string title { "Button" };
-    bool active { true };
-    std::function<void()> callback;
-};
-
-struct Option
-{
-    std::string title { "Option" };
-    std::deque<Button> m_Buttons { };
-    int m_ActiveButtonIdx { 0 };
-
-    template <typename T>
-    void AddVariant(T&& button) noexcept
-    {
-        m_Buttons.emplace_back(button);
-    }
-};
-
-class ElementWithButtons
-{
-    std::weak_ptr<App> m_App;
-protected:
-    std::deque<std::variant<Button, Option>> m_Elements { };
-    int m_ActiveElementIdx { 0 };
-    void GetNextButton() noexcept;
-    void GetPreviousButton() noexcept;
-    void DrawElementsVertical(::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept;
-    void DrawOption(const Option& option, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float height) noexcept;
-    void DrawButton(const Button& button, bool active, const ::MiniKit::Graphics::Color& color, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer, float x, float y, float width, float height) noexcept;
-public:
-    ElementWithButtons(std::shared_ptr<App> app) : m_App(app)
-    {
-
-    }
-    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept;
-};
-
-class Menu : public AppElement, public ElementWithButtons
-{
-public:
-    Menu(::std::shared_ptr<App> app);
-
-    virtual void Init(::MiniKit::Engine::Context& context) override;
-
-    virtual void Enter() noexcept override;
-
-    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
-
-    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
-};
-
-class Options : public AppElement , public ElementWithButtons
-{
-public:
-    Options(::std::shared_ptr<App> app);
-
-    virtual void Init(::MiniKit::Engine::Context& context) override;
-
-    virtual void Exit() noexcept override;
-
-    virtual void Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept override;
-
-    virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
 };
 
 class Game : public AppElement, public std::enable_shared_from_this<Game>
@@ -305,46 +164,4 @@ public:
     virtual void KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
     
     virtual void KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept override;
-};
-
-class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platform::Responder,
-                   public std::enable_shared_from_this<App> 
-{
-    friend class Menu;
-    friend class Game;
-    friend class Option;
-
-    Element m_Element { Element::COUNT };
-    ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
-
-    ::std::unordered_map<::std::string, ::std::shared_ptr<::MiniKit::Graphics::Image>> m_Images;
-    ::MiniKit::Graphics::float2 m_BackgroundScale{ 1.0f, 1.0f };
-
-    std::unordered_map<MiniKit::Platform::Keycode, bool> m_KeyState {};
-    
-    void DrawBackground(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface,::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
-public:
-    ::std::error_code Start(::MiniKit::Engine::Context& context) noexcept override;
-    
-    ::std::error_code Shutdown(::MiniKit::Engine::Context& context) noexcept override;
-    
-    void Tick(::MiniKit::Engine::Context& context) noexcept override;
-
-    virtual void KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
-    
-    virtual void KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::KeyEvent& event) noexcept override;
-
-    void ChangeElement(Element element) noexcept;
-
-    void DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
-                    ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
-                    const std::string text, float& x, float& y, float width, float height) noexcept;
-
-    void StartNewGame() noexcept;
-
-    const auto& GetImage(std::string name) noexcept;
-
-    bool GetGameState() noexcept;
-
-    void SetGhostPiece(bool value) noexcept;
 };
