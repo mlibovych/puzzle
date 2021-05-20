@@ -22,7 +22,11 @@ void Menu::Init(::MiniKit::Engine::Context& context)
 
         app->ChangeElement(Element::OPTIONS);
     }});
-    m_Elements.push_back(Button{"Leaders", false});
+    m_Elements.push_back(Button{"Leaders", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->ChangeElement(Element::LEADERBOARD);
+    }});
     m_Elements.push_back(Button{"Help", true, [&]() {
         auto app = AppElement::m_App.lock();
 

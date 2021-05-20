@@ -586,7 +586,10 @@ void GameOverState::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphic
 
 void GameOverState::Enter() noexcept
 {
+    auto game = m_Game.lock();
+    auto app = game->m_App.lock();
 
+    app->SaveResult(game->m_Score);
 }
 
 void GameOverState::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept

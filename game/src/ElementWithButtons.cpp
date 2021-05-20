@@ -9,8 +9,10 @@ void ElementWithButtons::DrawOption(const Option& option, bool active, const ::M
     auto textX = x - ((option.title.size() - 1) * 40 + option.m_Buttons.size() * 200) / 2;
     auto scaleX = (static_cast<float> (option.title.size()) * 40 + option.m_Buttons.size() * 200 + g_Padding * 2) / image.GetSize().width;
     auto scaleY = height / static_cast<float> (image.GetSize().height);
+    auto buttonColor = g_OrangeColor;
 
     if (active) {
+        buttonColor = g_BlackColor;
         commandBuffer.SetImage(image);
         drawSurface.tint = color;
         drawSurface.position = { x, y };
@@ -26,7 +28,9 @@ void ElementWithButtons::DrawOption(const Option& option, bool active, const ::M
     auto startX = textX + 200 / 2  - 40 / 2;
 
     for (const auto& button : option.m_Buttons) {
-        DrawButton(button, option.m_ActiveButtonIdx == count, g_BlackColor, drawSurface, commandBuffer, startX, y, 200, 80);
+        bool active = option.m_ActiveButtonIdx == count;
+
+        DrawButton(button, active, buttonColor, drawSurface, commandBuffer, startX, y, 200, 80);
         startX += 200.0f;
         count++;
     }

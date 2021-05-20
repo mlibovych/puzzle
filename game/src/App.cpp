@@ -3,7 +3,7 @@
 #include <Menu.h>
 #include <Options.h>
 #include <Help.h>
-
+#include <LeaderBoard.h>
 
 ::std::error_code App::Start(::MiniKit::Engine::Context& context) noexcept
 {   
@@ -42,6 +42,7 @@
     m_Elements[Element::MENU] = std::make_shared<Menu> (shared_from_this());
     m_Elements[Element::OPTIONS] = std::make_shared<Options> (shared_from_this());
     m_Elements[Element::HELP] = std::make_shared<Help> (shared_from_this());
+    m_Elements[Element::LEADERBOARD] = std::make_shared<LeaderBoard> (shared_from_this());
     for (auto& [key, value] : m_Elements) {
         value->Init(context);
     }
@@ -59,7 +60,6 @@ void App::Tick(::MiniKit::Engine::Context& context) noexcept
 
     DrawBackground(context, drawSurface, commandBuffer);
     m_Elements[m_Element]->Tick(context, drawSurface, commandBuffer);
-
 
     graphicsDevice.EndFrame(commandBuffer);
 }
@@ -190,4 +190,9 @@ void App::DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
 
         x += width;
     }
+}
+
+void App::SaveResult(int result) noexcept
+{
+    static_cast<LeaderBoard*> (m_Elements[Element::LEADERBOARD].get())->Add(result);
 }

@@ -41,6 +41,7 @@ enum class Element
     GAME,
     OPTIONS,
     HELP,
+    LEADERBOARD,
     COUNT
 };
 
@@ -51,6 +52,7 @@ class App final : public ::MiniKit::Engine::Application, public ::MiniKit::Platf
     friend class Game;
     friend class Option;
     friend class Help;
+    friend class LeaderBoard;
 
     Element m_Element { Element::COUNT };
     ::std::unordered_map<Element, ::std::shared_ptr<AppElement>> m_Elements { };
@@ -85,4 +87,6 @@ public:
     bool GetGameState() noexcept;
 
     void SetGhostPiece(bool value) noexcept;
+
+    void SaveResult(int result) noexcept;
 };
