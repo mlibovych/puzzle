@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include <MiniKit/MiniKit.hpp>
+#include <imgui.h>
 #include <AppElement.h>
 
 constexpr int g_FieldWidth = 10;

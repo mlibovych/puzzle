@@ -140,6 +140,11 @@ class Game : public AppElement, public std::enable_shared_from_this<Game>
     float m_LevelNumberY { 0.0f };
     float m_LinesNumberY { 0.0f };
 
+    bool m_Debug { false };
+    float m_Fps { 0.0f };
+    std::vector<float> m_FpsData;
+    float m_FpsTime { 0.0f };
+
     void Draw(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawField(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;
     void DrawBlocks(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept;

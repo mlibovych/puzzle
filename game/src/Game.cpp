@@ -73,11 +73,45 @@ void Game::Init(::MiniKit::Engine::Context& context)
     m_LevelNumberY = m_LevelTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
     m_LinesTitleY = m_LevelNumberY - 0.5f * 60 * 2 - 3 * g_Padding;
     m_LinesNumberY = m_LinesTitleY - 0.5f * 60 * 2 - 3 * g_Padding;
+
+    m_FpsData.reserve(10000); 
 }
 
 void Game::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics::DrawInfo& drawSurface, ::MiniKit::Graphics::CommandBuffer& commandBuffer) noexcept
 {   
     m_States[m_State]->Tick(context, drawSurface, commandBuffer);
+
+    m_FpsTime += context.GetFrameDelta();
+    if (m_FpsTime > 0.2f) {
+        m_FpsTime = 0;
+        m_Fps = 1.0f / context.GetFrameDelta();
+        if (m_FpsData.size() >= 10000) {
+            m_FpsData.clear();
+        }
+        m_FpsData.push_back(m_Fps);
+    }
+    if (m_Debug) {
+        ImGui::Begin("Debug"); 
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, m_Fps);
+        ImGui::PlotLines("FPS", m_FpsData.data(), m_FpsData.size());
+        ImGui::SliderFloat("Speed", &m_FallSpeed, 0.01f, 0.9f); 
+        ImGui::Text(std::to_string(m_Level).data());
+        ImGui::SameLine();
+        if (ImGui::Button("+")) {
+            if (m_Level < 99999) {
+                m_Level++;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("-")) {
+            if (m_Level > 0) {
+                m_Level--;
+            }
+        }
+        ImGui::SameLine();
+        ImGui::Text("Level");
+        ImGui::End();
+    }
 }
 
 void Game::UpdateSettings()
@@ -392,7 +426,14 @@ void Game::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
     using ::MiniKit::Platform::Keycode;
 
     switch (event.keycode)
-    {
+    {   
+        case Keycode::KeyD:
+        {
+            auto app = m_App.lock();
+            if (app->m_KeyState[Keycode::KeyLeftControl] == true) {
+                m_Debug = !m_Debug;
+            }
+        }
         case Keycode::KeyLeft:
         case Keycode::KeyRight:
         case Keycode::KeyDown:

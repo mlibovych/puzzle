@@ -6,7 +6,7 @@
 #include <LeaderBoard.h>
 
 ::std::error_code App::Start(::MiniKit::Engine::Context& context) noexcept
-{   
+{      
     //window
     auto& window = context.GetWindow();
     window.AddResponder(*this);
@@ -69,7 +69,8 @@ void App::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform
     using ::MiniKit::Platform::Keycode;
 
     switch (event.keycode)
-    {
+    {   
+        case Keycode::KeyD:
         case Keycode::KeyLeft:
         case Keycode::KeyRight:
         case Keycode::KeyDown:
@@ -78,6 +79,7 @@ void App::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform
         case Keycode::KeyC:
         case Keycode::KeySpace:
         case Keycode::KeyEnter:
+        case Keycode::KeyLeftControl:
         {
             if (!m_KeyState[event.keycode])
             {
@@ -96,7 +98,8 @@ void App::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::
     using ::MiniKit::Platform::Keycode;
 
     switch (event.keycode)
-    {
+    {   
+        case Keycode::KeyD:
         case Keycode::KeyLeft:
         case Keycode::KeyRight:
         case Keycode::KeyDown:
@@ -105,6 +108,7 @@ void App::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::
         case Keycode::KeyC:
         case Keycode::KeySpace:
         case Keycode::KeyEnter:
+        case Keycode::KeyLeftControl:
         {
             if (m_KeyState[event.keycode])
             {
