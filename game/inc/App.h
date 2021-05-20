@@ -89,5 +89,7 @@ public:
 
     void SetGhostPiece(bool value) noexcept;
 
-    void SaveResult(int result) noexcept;
+    void SetSave(bool value) noexcept;
+
+    void SaveResult(int result, const std::string& name) noexcept;
 };

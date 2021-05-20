@@ -434,19 +434,8 @@ void Game::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
                 m_Debug = !m_Debug;
             }
         }
-        case Keycode::KeyLeft:
-        case Keycode::KeyRight:
-        case Keycode::KeyDown:
-        case Keycode::KeyUp:
-        case Keycode::KeyZ:
-        case Keycode::KeyC:
-        case Keycode::KeySpace:
-        case Keycode::KeyEnter:
-        {
-            m_States[m_State]->KeyDown(event);
-            break;
-        }
         default:
+            m_States[m_State]->KeyDown(event);
             break;
     }
 }
@@ -455,23 +444,7 @@ void Game::KeyUp(const ::MiniKit::Platform::KeyEvent& event) noexcept
 {
     using ::MiniKit::Platform::Keycode;
 
-    switch (event.keycode)
-    {
-        case Keycode::KeyLeft:
-        case Keycode::KeyRight:
-        case Keycode::KeyDown:
-        case Keycode::KeyUp:
-        case Keycode::KeyZ:
-        case Keycode::KeyC:
-        case Keycode::KeySpace:
-        case Keycode::KeyEnter:
-        {
-            m_States[m_State]->KeyUp(event);
-            break;
-        }
-        default:
-            break;
-    }
+    m_States[m_State]->KeyUp(event);
 }
 
 GridResolver::GridResolver(std::shared_ptr<Game> game) : GameObject(game)

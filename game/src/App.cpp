@@ -70,13 +70,37 @@ void App::KeyDown(::MiniKit::Platform::Window& window, const ::MiniKit::Platform
 
     switch (event.keycode)
     {   
+        case Keycode::KeyA:
+        case Keycode::KeyB:
+        case Keycode::KeyC:
         case Keycode::KeyD:
+        case Keycode::KeyE:
+        case Keycode::KeyF:
+        case Keycode::KeyG:
+        case Keycode::KeyH:
+        case Keycode::KeyI:
+        case Keycode::KeyJ:
+        case Keycode::KeyK:
+        case Keycode::KeyL:
+        case Keycode::KeyM:
+        case Keycode::KeyN:
+        case Keycode::KeyO:
+        case Keycode::KeyP:
+        case Keycode::KeyQ:
+        case Keycode::KeyR:
+        case Keycode::KeyS:
+        case Keycode::KeyT:
+        case Keycode::KeyU:
+        case Keycode::KeyV:
+        case Keycode::KeyW:
+        case Keycode::KeyX:
+        case Keycode::KeyY:
+        case Keycode::KeyZ:
+        case Keycode::KeyBackspace:
         case Keycode::KeyLeft:
         case Keycode::KeyRight:
         case Keycode::KeyDown:
         case Keycode::KeyUp:
-        case Keycode::KeyZ:
-        case Keycode::KeyC:
         case Keycode::KeySpace:
         case Keycode::KeyEnter:
         case Keycode::KeyLeftControl:
@@ -99,13 +123,37 @@ void App::KeyUp(::MiniKit::Platform::Window& window, const ::MiniKit::Platform::
 
     switch (event.keycode)
     {   
+        case Keycode::KeyA:
+        case Keycode::KeyB:
+        case Keycode::KeyC:
         case Keycode::KeyD:
+        case Keycode::KeyE:
+        case Keycode::KeyF:
+        case Keycode::KeyG:
+        case Keycode::KeyH:
+        case Keycode::KeyI:
+        case Keycode::KeyJ:
+        case Keycode::KeyK:
+        case Keycode::KeyL:
+        case Keycode::KeyM:
+        case Keycode::KeyN:
+        case Keycode::KeyO:
+        case Keycode::KeyP:
+        case Keycode::KeyQ:
+        case Keycode::KeyR:
+        case Keycode::KeyS:
+        case Keycode::KeyT:
+        case Keycode::KeyU:
+        case Keycode::KeyV:
+        case Keycode::KeyW:
+        case Keycode::KeyX:
+        case Keycode::KeyY:
+        case Keycode::KeyZ:
+        case Keycode::KeyBackspace:
         case Keycode::KeyLeft:
         case Keycode::KeyRight:
         case Keycode::KeyDown:
         case Keycode::KeyUp:
-        case Keycode::KeyZ:
-        case Keycode::KeyC:
         case Keycode::KeySpace:
         case Keycode::KeyEnter:
         case Keycode::KeyLeftControl:
@@ -173,6 +221,11 @@ void App::SetGhostPiece(bool value) noexcept
     static_cast<Game*> (m_Elements[Element::GAME].get())->m_Ghost = value;
 }
 
+void App::SetSave(bool value) noexcept
+{
+    static_cast<Game*> (m_Elements[Element::GAME].get())->m_Save = value;
+}
+
 void App::DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
                     ::MiniKit::Graphics::CommandBuffer& commandBuffer, const ::MiniKit::Graphics::Color& color,
                     const std::string text, float& x, float& y, float width, float height) noexcept
@@ -196,7 +249,7 @@ void App::DrawText(::MiniKit::Graphics::DrawInfo& drawSurface,
     }
 }
 
-void App::SaveResult(int result) noexcept
+void App::SaveResult(int result, const std::string& name) noexcept
 {
-    static_cast<LeaderBoard*> (m_Elements[Element::LEADERBOARD].get())->Add(result);
+    static_cast<LeaderBoard*> (m_Elements[Element::LEADERBOARD].get())->Add(result, name);
 }

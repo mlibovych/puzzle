@@ -6,8 +6,8 @@ void ElementWithButtons::DrawOption(const Option& option, bool active, const ::M
 {   
     auto app = m_App.lock();
     auto& image = app->GetImage("border");
-    auto textX = x - ((option.title.size() - 1) * 40 + option.m_Buttons.size() * 200) / 2;
-    auto scaleX = (static_cast<float> (option.title.size()) * 40 + option.m_Buttons.size() * 200 + g_Padding * 2) / image.GetSize().width;
+    auto textX = x - 400;//x - ((option.title.size() - 1) * 40 + option.m_Buttons.size() * 200) / 2;
+    auto scaleX = 1050.0f / image.GetSize().width;//(static_cast<float> (option.title.size()) * 40 + option.m_Buttons.size() * 200 + g_Padding * 2) / image.GetSize().width;
     auto scaleY = height / static_cast<float> (image.GetSize().height);
     auto buttonColor = g_OrangeColor;
 
@@ -25,7 +25,7 @@ void ElementWithButtons::DrawOption(const Option& option, bool active, const ::M
         option.title, textX, y, 40, 50);
 
     int count = 0;
-    auto startX = textX + 200 / 2  - 40 / 2;
+    auto startX = x + 200;//textX + 200 / 2  - 40 / 2;
 
     for (const auto& button : option.m_Buttons) {
         bool active = option.m_ActiveButtonIdx == count;
@@ -92,7 +92,7 @@ void ElementWithButtons::DrawButton(const Button& button, bool active, const ::M
 
     auto textX = x - (button.title.size() - 1 ) * 40 / 2;
     auto scaleX = width / image.GetSize().width;
-    auto scaleY = height / static_cast<float> (image.GetSize().height);
+    auto scaleY = height / image.GetSize().height;
 
     if (active) {
         commandBuffer.SetImage(image);

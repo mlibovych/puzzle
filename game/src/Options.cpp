@@ -7,20 +7,35 @@ Options::Options(::std::shared_ptr<App> app) : AppElement(app), ElementWithButto
 
 void Options::Init(::MiniKit::Engine::Context& context)
 {   
-    Option option;
-    option.title = "Ghost piece";
-    option.AddVariant(Button{"On", true, [&]() {
+    Option ghost;
+
+    ghost.title = "Ghost piece";
+    ghost.AddVariant(Button{"On", true, [&]() {
         auto app = AppElement::m_App.lock();
 
         app->SetGhostPiece(true);
     }});
-    option.AddVariant(Button{"Off", true, [&]() {
+    ghost.AddVariant(Button{"Off", true, [&]() {
         auto app = AppElement::m_App.lock();
 
         app->SetGhostPiece(false);
     }});
+    m_Elements.push_back(ghost);
 
-    m_Elements.push_back(option);
+    Option save;
+    save.title = "Save progress";
+    save.AddVariant(Button{"On", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->SetSave(true);
+    }});
+    save.AddVariant(Button{"Off", true, [&]() {
+        auto app = AppElement::m_App.lock();
+
+        app->SetSave(false);
+    }});
+    m_Elements.push_back(save);
+
     m_Elements.push_back(Button{"Back", true, [&]() {
         auto app = AppElement::m_App.lock();
 

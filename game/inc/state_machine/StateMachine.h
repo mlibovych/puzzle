@@ -146,6 +146,9 @@ public:
 
 class GameOverState : public GameState, public ElementWithButtons
 {
+    std::string m_Invitation { "Enter your name" };
+    std::string m_Name { };
+    bool m_Save { true };
 public:
     GameOverState(std::shared_ptr<Game> game);
     ~GameOverState();

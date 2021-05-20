@@ -19,7 +19,13 @@ void LeaderBoard::Update() noexcept
         int count = 0;
 
         while(getline(file, line)) {
-            m_Table.insert(std::stoi(line));
+            if (line.find(' ') == line.npos) {
+                throw std::invalid_argument(line);
+            }
+            auto name = line.substr(0, line.find(' '));
+            auto result = std::stoi(line.substr(line.find(' ') + 1, line.npos));
+
+            m_Table.insert({name, result});
             if (++count >= 10) {
                 break;
             }
@@ -57,10 +63,14 @@ void LeaderBoard::Tick(::MiniKit::Engine::Context& context, ::MiniKit::Graphics:
         startY -= 70 + g_Padding * 3;
 
         for (auto it = m_Table.rbegin(); it != m_Table.rend(); it++) {
-            auto record = std::to_string(*it);
+            auto result = std::to_string(it->result);
+            auto name = it->name;
 
-            startX = 0 - (record.size() - 1) * 40.0f / 2;
-            app->DrawText(drawSurface, commandBuffer, g_WhiteColor, std::to_string(*it), startX, startY, 40, 50);
+            startX = 1600.0f / -2 + g_Padding + 200;
+            app->DrawText(drawSurface, commandBuffer, g_WhiteColor, name, startX, startY, 40, 50);  
+
+            startX = 1600.0f / 2 - g_Padding - 200 - (result.size() - 1) * 40.0f;
+            app->DrawText(drawSurface, commandBuffer, g_OrangeColor, result, startX, startY, 40, 50);
             startY -= 50 + g_Padding * 3;   
         }
     }
@@ -79,10 +89,10 @@ void LeaderBoard::KeyDown(const ::MiniKit::Platform::KeyEvent& event) noexcept
     ElementWithButtons::KeyDown(event);
 }
 
-void LeaderBoard::Add(int result) noexcept
+void LeaderBoard::Add(int result, const std::string& name) noexcept
 {
-    if (result > *m_Table.begin()) {
-        m_Table.insert(result);
+    if (result > m_Table.begin()->result) {
+        m_Table.insert({name, result});
     }
 
     std::ofstream file(g_PathToLeaderBoard);
@@ -92,8 +102,6 @@ void LeaderBoard::Add(int result) noexcept
         return;
     }
     for (auto it = m_Table.rbegin(); it != m_Table.rend(); it++) {
-        auto record = std::to_string(*it);
-
-        file << record << "\n";
+        file << it->name << " " << std::to_string(it->result)  << "\n";
     }
 }

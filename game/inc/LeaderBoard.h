@@ -20,7 +20,18 @@ const std::string g_PathToLeaderBoard = "game/.leaderboard.txt";
 
 class LeaderBoard : public AppElement , public ElementWithButtons
 {
-    std::multiset<int> m_Table { };
+    struct Record
+    {
+        std::string name;
+        int result;
+
+        bool operator<(const Record& other) const
+        {
+            return result < other.result;
+        }
+    };
+
+    std::set<Record> m_Table { };
     bool m_Ok { true };
     std::string m_WarningLabel { "Somebody corrupted your saves" };
     std::string m_Title { "Top 10 results" };
@@ -35,5 +46,5 @@ public:
 
     void Update() noexcept;
 
-    void Add(int result) noexcept;
+    void Add(int result, const std::string& name) noexcept;
 };
