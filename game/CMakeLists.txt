@@ -10,10 +10,12 @@ set(TARGET puzzle)
 
 project(${TARGET} LANGUAGES CXX)
 
-set (SOURCES src/main.cpp src/Game.cpp src/state_machine/StateMachine.cpp src/Tetromino.cpp
+set (SOURCES src/main.cpp src/Game.cpp src/Tetromino.cpp src/LeaderBoard.cpp 
     src/EventSystem.cpp src/Settings.cpp src/AppElement.cpp src/App.cpp
     src/ElementWithButtons.cpp src/Menu.cpp src/Options.cpp src/Help.cpp
-    src/LeaderBoard.cpp)
+    src/state_machine/StateMachine.cpp src/state_machine/PositioningState.cpp
+    src/state_machine/GameOverState.cpp src/state_machine/PauseState.cpp
+    src/state_machine/SpwnState.cpp src/state_machine/LineCompleated.cpp)
 
 include_directories(inc inc/state_machine)
 

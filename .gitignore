@@ -3,6 +3,7 @@
 *.o
 *.out
 build
+.vscode
 puzzle
 imgui.ini
 minikit

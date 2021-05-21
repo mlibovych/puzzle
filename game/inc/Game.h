@@ -14,6 +14,11 @@
 #include <App.h>
 #include <AppElement.h>
 #include <StateMachine.h>
+#include <PositioningState.h>
+#include <SpawnState.h>
+#include <GameOverState.h>
+#include <PauseState.h>
+#include <LineCompleated.h>
 #include <ElementWithButtons.h>
 
 #include <MiniKit/MiniKit.hpp>
