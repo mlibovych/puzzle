@@ -26,7 +26,7 @@ ___
 
 ### Installation:
     1. git clone https://github.com/mlibovych/puzzle --recursive
-    2. cmake . -Bbuild -Wdev -Werror=dev && cmake --build ./build
+    2. cmake . -Bbuild  && cmake --build ./build
 
 ### How to use?
     ./puzzle
